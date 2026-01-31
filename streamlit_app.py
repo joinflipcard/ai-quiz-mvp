@@ -23,6 +23,11 @@ if "meta" not in st.session_state:
 if "error" not in st.session_state:
     st.session_state.error = None
 
+if "show_feedback" not in st.session_state:
+    st.session_state.show_feedback = False
+    st.session_state.last_correct = False
+    st.session_state.last_explanation = ""
+
 
 # ------------------ helpers ------------------
 
@@ -63,6 +68,7 @@ if st.button("Start Quiz"):
         else:
             st.session_state.quiz = quiz_data["questions"]
             st.session_state.index = 0
+            st.session_state.show_feedback = False
             st.session_state.error = None
 
 
@@ -80,21 +86,39 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     st.subheader(q["question"])
 
-    for letter, text in q["choices"].items():
-        if st.button(f"{letter}: {text}", key=f"{st.session_state.index}-{letter}"):
+    if not st.session_state.show_feedback:
 
-            correct = (letter == q["correct"])
+        for letter, text in q["choices"].items():
+            if st.button(f"{letter}: {text}", key=f"{st.session_state.index}-{letter}"):
 
-            post(
-                f"{BACKEND}/submit-answer",
-                {
-                    "user_id": st.session_state.user_id,
-                    "field_id": st.session_state.meta["field_id"],
-                    "topic_id": st.session_state.meta["topic_id"],
-                    "correct": correct
-                }
-            )
+                correct = (letter == q["correct"])
 
+                post(
+                    f"{BACKEND}/submit-answer",
+                    {
+                        "user_id": st.session_state.user_id,
+                        "field_id": st.session_state.meta["field_id"],
+                        "topic_id": st.session_state.meta["topic_id"],
+                        "correct": correct
+                    }
+                )
+
+                st.session_state.last_correct = correct
+                st.session_state.last_explanation = q["explanation"]
+                st.session_state.show_feedback = True
+                st.rerun()
+
+    else:
+        if st.session_state.last_correct:
+            st.success("Correct! 🎉")
+        else:
+            st.error("Not quite ❌")
+
+        st.write("Explanation:")
+        st.info(st.session_state.last_explanation)
+
+        if st.button("Next Question"):
+            st.session_state.show_feedback = False
             st.session_state.index += 1
             st.rerun()
 
