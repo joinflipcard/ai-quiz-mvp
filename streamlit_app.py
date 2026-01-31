@@ -85,6 +85,12 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     q = st.session_state.quiz[st.session_state.index]
 
     st.subheader(q["question"])
+    
+    # 📸 SHOW IMAGE IF PRESENT
+
+if "image" in q and q["image"]:
+    st.image(q["image"], use_container_width=True)
+
 
     if not st.session_state.show_feedback:
 
