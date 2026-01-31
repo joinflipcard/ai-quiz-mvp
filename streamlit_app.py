@@ -82,7 +82,7 @@ if st.session_state.error:
 
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
 
-    if not isinstance(q, dict) or "question" not in q:
+if not isinstance(q, dict) or "question" not in q:
     st.error("Loading next question...")
     st.stop()
 
