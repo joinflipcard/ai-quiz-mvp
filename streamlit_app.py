@@ -3,7 +3,7 @@ import requests
 
 st.title("AI Tutor Quiz MVP")
 
-BACKEND = "http://localhost:8000"   # change later if hosted
+BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 if "quiz" not in st.session_state:
     st.session_state.quiz = []
