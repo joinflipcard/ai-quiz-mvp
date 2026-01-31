@@ -82,20 +82,17 @@ if st.session_state.error:
 
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
 
-if not isinstance(q, dict) or "question" not in q:
-    st.error("Loading next question...")
-    st.stop()
+    q = st.session_state.quiz[st.session_state.index]
 
-st.subheader(q["question"])
+    if not isinstance(q, dict) or "question" not in q:
+        st.error("Loading next question...")
+        st.stop()
+
+    st.subheader(q["question"])
 
     # 📸 SHOW IMAGE IF PRESENT (safe)
-if q.get("image"):
-    st.image(q["image"], use_container_width=True)
-
-
-if "image" in q and q["image"]:
-    st.image(q["image"], use_container_width=True)
-
+    if q.get("image"):
+        st.image(q["image"], use_container_width=True)
 
     if not st.session_state.show_feedback:
 
