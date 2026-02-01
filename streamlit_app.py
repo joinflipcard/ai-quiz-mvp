@@ -201,68 +201,79 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     unsafe_allow_html=True
 )
 
-    # 📊 STATIC CONCEPT DIAGRAM (fast & reliable)
+    # 📊 STATIC CONCEPT DIAGRAM (smart + reliable)
 
-    diagram = None
+diagram = None
 
-    topic = st.session_state.meta.get("topic", "").lower()
-    field = st.session_state.meta.get("field_id", "").lower()
-    question = q.get("question", "").lower()
+topic = st.session_state.meta.get("topic", "").lower()
+field = st.session_state.meta.get("field_id", "").lower()
+question = q.get("question", "").lower()
 
-    # Only attempt visuals in visual-friendly subjects
-    if any(domain in field for domain in VISUAL_DOMAINS):
+# Only attempt visuals in visual-friendly subjects
+if any(domain in field for domain in VISUAL_DOMAINS):
 
-        search_text = f"{topic} {question}"
+    search_text = f"{topic} {question}"
 
-        for key, url in DIAGRAMS.items():
-            if key in search_text:
-                diagram = url
-                break
+    for key, url in DIAGRAMS.items():
+        if key in search_text:
+            diagram = url
+            break
 
+# Render diagram or fallback
 if diagram:
     st.image(diagram, use_container_width=True)
+else:
+    st.caption("Concept diagram will appear when relevant 📊")
 
 
-    else:
-        st.caption("Concept diagram will appear when relevant 📊")
+# ------------------ answer buttons ------------------
 
-    if not st.session_state.show_feedback:
+if not st.session_state.show_feedback:
 
-        for letter, text in q["choices"].items():
-            if st.button(f"{letter}. {text}", key=f"{st.session_state.index}-{letter}", use_container_width=True):
+    for letter, text in q["choices"].items():
+        if st.button(
+            f"{letter}. {text}",
+            key=f"{st.session_state.index}-{letter}",
+            use_container_width=True
+        ):
 
-                correct = (letter == q["correct"])
+            correct = (letter == q["correct"])
 
-                post(
-                    f"{BACKEND}/submit-answer",
-                    {
-                        "user_id": st.session_state.user_id,
-                        "field_id": st.session_state.meta["field_id"],
-                        "topic_id": st.session_state.meta["topic_id"],
-                        "correct": correct
-                    }
-                )
+            post(
+                f"{BACKEND}/submit-answer",
+                {
+                    "user_id": st.session_state.user_id,
+                    "field_id": st.session_state.meta["field_id"],
+                    "topic_id": st.session_state.meta["topic_id"],
+                    "correct": correct
+                }
+            )
 
-                st.session_state.last_correct = correct
-                if correct:
-                    st.session_state.round_correct += 1
-                st.session_state.last_explanation = q["explanation"]
-                st.session_state.show_feedback = True
-                st.rerun()
+            st.session_state.last_correct = correct
+            if correct:
+                st.session_state.round_correct += 1
 
-    else:
-        if st.session_state.last_correct:
-            st.success("Correct! 🎉")
-        else:
-            st.error("Not quite ❌")
-
-        st.write("Explanation:")
-        st.info(st.session_state.last_explanation)
-
-        if st.button("Next Question"):
-            st.session_state.show_feedback = False
-            st.session_state.index += 1
+            st.session_state.last_explanation = q["explanation"]
+            st.session_state.show_feedback = True
             st.rerun()
+
+
+# ------------------ feedback screen ------------------
+
+else:
+    if st.session_state.last_correct:
+        st.success("Correct! 🎉")
+    else:
+        st.error("Not quite ❌")
+
+    st.write("Explanation:")
+    st.info(st.session_state.last_explanation)
+
+    if st.button("Next Question"):
+        st.session_state.show_feedback = False
+        st.session_state.index += 1
+        st.rerun()
+
 
 # ------------------ finished ------------------
 
