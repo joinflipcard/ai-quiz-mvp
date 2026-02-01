@@ -250,7 +250,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
 
-    # If prefetch finished — instant swap
+    # ✅ If prefetch finished — instant swap (fast path)
     if st.session_state.next_quiz:
 
         if st.session_state.round_correct >= 3:
@@ -273,31 +273,32 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
 
-    # If prefetch still loading — fetch now (fallback)
+    # 🛟 Fallback — force load immediately if prefetch not ready
     else:
         st.info("Loading next topic...")
 
-        data, err = post(
+        data = requests.post(
             f"{BACKEND}/next-topic",
-            {"user_id": st.session_state.user_id}
-        )
+            json={"user_id": st.session_state.user_id},
+            timeout=20
+        ).json()
 
-        if not err:
-            quiz_data, err = post(
-                f"{BACKEND}/generate-quiz",
-                {
-                    "topic": data["topic"],
-                    "start_difficulty": data["start_difficulty"]
-                }
-            )
+        quiz_data = requests.post(
+            f"{BACKEND}/generate-quiz",
+            json={
+                "topic": data["topic"],
+                "start_difficulty": 1
+            },
+            timeout=20
+        ).json()
 
-            if not err:
-                st.session_state.quiz = quiz_data["questions"]
-                st.session_state.meta = data
-                st.session_state.index = 0
-                st.session_state.show_feedback = False
-                st.session_state.round_correct = 0
+        st.session_state.quiz = quiz_data["questions"]
+        st.session_state.meta = data
+        st.session_state.index = 0
+        st.session_state.show_feedback = False
+        st.session_state.round_correct = 0
 
-                threading.Thread(target=prefetch_next, daemon=True).start()
-                st.rerun()
+        threading.Thread(target=prefetch_next, daemon=True).start()
+        st.rerun()
+
 
