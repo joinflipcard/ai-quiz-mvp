@@ -111,6 +111,9 @@ if "next_meta" not in st.session_state:
 if "round_correct" not in st.session_state:
     st.session_state.round_correct = 0
 
+if "mastered_topics" not in st.session_state:
+    st.session_state.mastered_topics = set()
+
 # ------------------ helpers ------------------
 
 def post(url, payload):
