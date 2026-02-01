@@ -207,7 +207,7 @@ diagram = None
 
 topic = st.session_state.meta.get("topic", "").lower()
 field = st.session_state.meta.get("field_id", "").lower()
-question = q.get("question", "").lower()
+question = str(q.get("question", "") if isinstance(q, dict) else "").lower()
 
 # Only attempt visuals in visual-friendly subjects
 if any(domain in field for domain in VISUAL_DOMAINS):
