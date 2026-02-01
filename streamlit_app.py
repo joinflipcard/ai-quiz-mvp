@@ -205,12 +205,13 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     for key, url in DIAGRAMS.items():
         if key.replace(" ", "_") in st.session_state.meta["topic_id"] \
-        or key in topic_text:
+        or key in search_text:
             diagram = url
             break
 
     if diagram:
         st.image(diagram, use_container_width=True)
+
     else:
         st.caption("Concept diagram will appear when relevant 📊")
 
