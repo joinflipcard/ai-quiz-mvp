@@ -34,6 +34,9 @@ if "next_quiz" not in st.session_state:
 if "next_meta" not in st.session_state:
     st.session_state.next_meta = {}
 
+if "round_correct" not in st.session_state:
+    st.session_state.round_correct = 0
+
 # ------------------ helpers ------------------
 
 def post(url, payload):
@@ -138,6 +141,8 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 )
 
                 st.session_state.last_correct = correct
+                if correct:
+                    st.session_state.round_correct += 1
                 st.session_state.last_explanation = q["explanation"]
                 st.session_state.show_feedback = True
                 st.rerun()
@@ -163,7 +168,11 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
     if st.session_state.next_quiz:
 
-        st.success("Topic mastered! ✅")
+        if st.session_state.round_correct >= 3:
+            st.success("Topic mastered! ✅")
+        else:
+            st.info("Moving on to a new topic ➡️")
+
         st.info(f"Next up: {st.session_state.next_meta['topic']}")
 
         st.session_state.quiz = st.session_state.next_quiz
@@ -174,6 +183,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         st.session_state.index = 0
         st.session_state.show_feedback = False
+        st.session_state.round_correct = 0
 
         prefetch_next()
         st.rerun()
