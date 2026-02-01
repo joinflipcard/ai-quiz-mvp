@@ -191,7 +191,10 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.error("Loading next question...")
         st.stop()
 
-    st.subheader(q["question"])
+    st.markdown(
+    f"<div style='font-size:26px; line-height:1.4; margin-bottom:20px;'>{q['question']}</div>",
+    unsafe_allow_html=True
+)
 
     # 📊 STATIC CONCEPT DIAGRAM (fast & reliable)
     diagram = None
@@ -210,7 +213,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     if not st.session_state.show_feedback:
 
         for letter, text in q["choices"].items():
-            if st.button(f"{letter}: {text}", key=f"{st.session_state.index}-{letter}"):
+            if st.button(f"{letter}. {text}", key=f"{st.session_state.index}-{letter}", use_container_width=True):
 
                 correct = (letter == q["correct"])
 
