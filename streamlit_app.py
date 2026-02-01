@@ -12,101 +12,58 @@ BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 DIAGRAMS = {
 
-    DIAGRAMS = {
-
 # ================= BIOLOGY =================
 "cell": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Animal_cell_structure_en.svg",
 "cell structure": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Animal_cell_structure_en.svg",
 "mitosis": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Mitosis_stages.svg",
 "meiosis": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Meiosis_Stages.svg",
 "dna": "https://upload.wikimedia.org/wikipedia/commons/8/87/DNA_double_helix_vertical.png",
-"dna replication": "https://upload.wikimedia.org/wikipedia/commons/2/2b/DNA_replication.svg",
-"transcription": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Transcription_DNA_RNA.svg",
-"translation": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Translation_protein_synthesis.svg",
 "photosynthesis": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Photosynthesis_overview.svg",
-"cellular respiration": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Cellular_respiration.svg",
-"food chain": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Food_web.svg",
 "ecosystem": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Food_web.svg",
 "energy flow": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Trophic_levels.svg",
 "nervous system": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Nervous_system_diagram.svg",
-"neuron": "https://upload.wikimedia.org/wikipedia/commons/1/10/Neuron_structure.svg",
 
 # ================= CHEMISTRY =================
 "periodic table": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Periodic_table_large.svg",
 "atomic structure": "https://upload.wikimedia.org/wikipedia/commons/8/82/Bohr_atom_model.svg",
-"electron shells": "https://upload.wikimedia.org/wikipedia/commons/8/82/Bohr_atom_model.svg",
-"ionic bond": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Ionic_and_covalent_bonds.png",
-"covalent bond": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Ionic_and_covalent_bonds.png",
+"bond": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Ionic_and_covalent_bonds.png",
 "molecular shape": "https://upload.wikimedia.org/wikipedia/commons/0/0c/VSEPR_shapes.png",
 "reaction energy": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Reaction_coordinate_diagram.svg",
-"exothermic": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Reaction_coordinate_diagram.svg",
-"endothermic": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Reaction_coordinate_diagram.svg",
-"gas laws": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Gas_laws.svg",
 "ph scale": "https://upload.wikimedia.org/wikipedia/commons/3/3b/PH_scale.svg",
-"states of matter": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Phase_changes.svg",
+"gas laws": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Gas_laws.svg",
 
 # ================= PHYSICS =================
 "motion": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Velocity_time_graph.png",
 "acceleration": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Acceleration_graph.svg",
-"motion graph": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Velocity_time_graph.png",
-
 "force": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Free_body_diagram2.svg",
-"net force": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Free_body_diagram2.svg",
-"friction": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Free_body_diagram2.svg",
-"tension": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Free_body_diagram2.svg",
-"normal force": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Free_body_diagram2.svg",
-"inertia": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Free_body_diagram2.svg",
-
 "projectile": "https://upload.wikimedia.org/wikipedia/commons/7/7c/Projectile_motion.svg",
-"free fall": "https://upload.wikimedia.org/wikipedia/commons/7/7c/Projectile_motion.svg",
-
 "electric field": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Electric_field_lines.svg",
-"magnetic field": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Right_hand_rule_current_magnetic_field.svg",
 "circuit": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Series_and_parallel_circuits.svg",
-"series circuit": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Series_and_parallel_circuits.svg",
-"parallel circuit": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Series_and_parallel_circuits.svg",
-
 "wave": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Wave_interference.svg",
-"interference": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Wave_interference.svg",
-"wavelength": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Wave_interference.svg",
 
 # ================= EARTH SCIENCE =================
 "plate tectonics": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Plate_tectonics.svg",
-"mountain building": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Plate_tectonics.svg",
 "earth layers": "https://upload.wikimedia.org/wikipedia/commons/0/04/Earth_layers.svg",
 "rock cycle": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Rock_cycle.svg",
 "water cycle": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Water_cycle.svg",
 "volcano": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Volcano_cross_section.svg",
-"weather fronts": "https://upload.wikimedia.org/wikipedia/commons/2/28/Weather_fronts.svg",
 
 # ================= MATH =================
 "graph": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Coordinate_plane.svg",
-"coordinate plane": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Coordinate_plane.svg",
 "slope": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Slope_rise_run.svg",
-"linear equation": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Coordinate_plane.svg",
 "triangle": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Triangle_angles_sum.svg",
-"area": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Area_shapes.svg",
 "probability": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Probability_tree.svg",
-"function": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Function_graph.svg",
 
 # ================= ECONOMICS =================
 "supply": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Supply_and_demand.svg",
 "demand": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Supply_and_demand.svg",
-"market equilibrium": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Supply_and_demand.svg",
 "scarcity": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Production_possibilities_frontier_curve.svg",
-"ppf": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Production_possibilities_frontier_curve.svg",
-"aggregate demand": "https://upload.wikimedia.org/wikipedia/commons/4/44/Aggregate_demand_aggregate_supply.svg",
-"aggregate supply": "https://upload.wikimedia.org/wikipedia/commons/4/44/Aggregate_demand_aggregate_supply.svg",
 
 # ================= TECHNOLOGY =================
 "algorithm": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Flowchart_example.svg",
-"flowchart": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Flowchart_example.svg",
-"program flow": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Program_flowchart.svg",
 "database": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Database_schema.svg",
 "internet": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Internet_packet_routing.svg",
-"client server": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Client-server-model.svg",
 }
-
 
 if st.button("Load All Topics"):
     r = requests.get(f"{BACKEND}/all-topics")
