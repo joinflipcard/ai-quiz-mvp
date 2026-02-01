@@ -1,16 +1,15 @@
-if st.button("Load All Topics"):
-    r = requests.get(f"{BACKEND}/all-topics")
-    topics = r.json()
-
-    st.write(f"Total topics: {len(topics)}")
-    st.dataframe(topics)
-
 import threading
 import streamlit as st
 import requests
 import uuid
 
-st.title("AI Tutor Quiz MVP")
+if st.button("Load All Topics"):
+    r = requests.get(f"{BACKEND}/all-topics")
+    topics = r.json()
+    st.write(f"Total topics: {len(topics)}")
+    st.dataframe(topics)
+
+st.title("Knowledge")
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
