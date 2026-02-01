@@ -10,6 +10,68 @@ import uuid
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
+DIAGRAMS = {
+
+    # ================= BIOLOGY =================
+    "cell": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Animal_cell_structure_en.svg",
+    "photosynthesis": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Photosynthesis_overview.svg",
+    "dna": "https://upload.wikimedia.org/wikipedia/commons/8/87/DNA_double_helix_vertical.png",
+    "mitosis": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Mitosis_stages.svg",
+    "meiosis": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Meiosis_Stages.svg",
+    "ecosystem": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Food_web.svg",
+    "energy flow": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Trophic_levels.svg",
+    "nervous system": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Nervous_system_diagram.svg",
+
+    # ================= CHEMISTRY =================
+    "periodic": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Periodic_table_large.svg",
+    "bond": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Ionic_and_covalent_bonds.png",
+    "molecular shape": "https://upload.wikimedia.org/wikipedia/commons/0/0c/VSEPR_shapes.png",
+    "reaction energy": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Reaction_coordinate_diagram.svg",
+    "ph": "https://upload.wikimedia.org/wikipedia/commons/3/3b/PH_scale.svg",
+    "gas law": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Gas_laws.svg",
+    "atomic structure": "https://upload.wikimedia.org/wikipedia/commons/8/82/Bohr_atom_model.svg",
+
+    # ================= PHYSICS =================
+    "motion": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Velocity_time_graph.png",
+    "acceleration": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Acceleration_graph.svg",
+    "force": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Free_body_diagram2.svg",
+    "magnetic": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Right_hand_rule_current_magnetic_field.svg",
+    "electric field": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Electric_field_lines.svg",
+    "circuit": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Series_and_parallel_circuits.svg",
+    "wave": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Wave_interference.svg",
+    "projectile": "https://upload.wikimedia.org/wikipedia/commons/7/7c/Projectile_motion.svg",
+
+    # ================= EARTH SCIENCE =================
+    "plate tectonics": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Plate_tectonics.svg",
+    "water cycle": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Water_cycle.svg",
+    "rock cycle": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Rock_cycle.svg",
+    "earth layers": "https://upload.wikimedia.org/wikipedia/commons/0/04/Earth_layers.svg",
+    "volcano": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Volcano_cross_section.svg",
+    "weather fronts": "https://upload.wikimedia.org/wikipedia/commons/2/28/Weather_fronts.svg",
+
+    # ================= MATH =================
+    "slope": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Slope_rise_run.svg",
+    "triangle": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Triangle_angles_sum.svg",
+    "graph": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Coordinate_plane.svg",
+    "area": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Area_shapes.svg",
+    "probability": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Probability_tree.svg",
+    "function": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Function_graph.svg",
+
+    # ================= TECHNOLOGY =================
+    "algorithm": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Flowchart_example.svg",
+    "program flow": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Program_flowchart.svg",
+    "database": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Database_schema.svg",
+    "internet": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Internet_packet_routing.svg",
+    "client server": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Client-server-model.svg",
+
+    # ================= ECONOMICS =================
+    "supply": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Supply_and_demand.svg",
+    "demand": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Supply_and_demand.svg",
+    "aggregate": "https://upload.wikimedia.org/wikipedia/commons/4/44/Aggregate_demand_aggregate_supply.svg",
+    "economy flow": "https://upload.wikimedia.org/wikipedia/commons/7/7a/Circular_flow_of_income.svg",
+    "scarcity": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Production_possibilities_frontier_curve.svg"
+}
+
 if st.button("Load All Topics"):
     r = requests.get(f"{BACKEND}/all-topics")
     topics = r.json()
@@ -133,12 +195,17 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     st.subheader(q["question"])
 
-    # 📸 SHOW IMAGE IF PRESENT (safe)
-    if q.get("image") and isinstance(q["image"], str) and q["image"].startswith("http"):
-        try:
-            st.image(q["image"], use_container_width=True)
-        except:
-            st.warning("Diagram unavailable for this question.")
+    # 📊 STATIC CONCEPT DIAGRAM (fast & reliable)
+    diagram = None
+    topic_text = st.session_state.meta["topic"].lower()
+
+    for key, url in DIAGRAMS.items():
+        if key in topic_text:
+            diagram = url
+            break
+
+    if diagram:
+        st.image(diagram, use_container_width=True)
 
     if not st.session_state.show_feedback:
 
