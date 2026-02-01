@@ -205,19 +205,19 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     diagram = None
 
-topic = st.session_state.meta.get("topic", "").lower()
-field = st.session_state.meta.get("field_id", "").lower()
-question = q.get("question", "").lower()
+    topic = st.session_state.meta.get("topic", "").lower()
+    field = st.session_state.meta.get("field_id", "").lower()
+    question = q.get("question", "").lower()
 
-# Only attempt visuals in visual-friendly subjects
-if any(domain in field for domain in VISUAL_DOMAINS):
+    # Only attempt visuals in visual-friendly subjects
+    if any(domain in field for domain in VISUAL_DOMAINS):
 
-    search_text = f"{topic} {question}"
+        search_text = f"{topic} {question}"
 
-    for key, url in DIAGRAMS.items():
-        if key in search_text:
-            diagram = url
-            break
+        for key, url in DIAGRAMS.items():
+            if key in search_text:
+                diagram = url
+                break
 
 if diagram:
     st.image(diagram, use_container_width=True)
