@@ -197,34 +197,31 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.stop()
 
     st.markdown(
-    f"<div style='font-size:26px; line-height:1.4; margin-bottom:20px;'>{q['question']}</div>",
-    unsafe_allow_html=True
-)
+        f"<div style='font-size:26px; line-height:1.4; margin-bottom:20px;'>{q['question']}</div>",
+        unsafe_allow_html=True
+    )
 
     # 📊 STATIC CONCEPT DIAGRAM (smart + reliable)
 
-diagram = None
+    diagram = None
 
-topic = st.session_state.meta.get("topic", "").lower()
-field = st.session_state.meta.get("field_id", "").lower()
-question = str(q.get("question", "") if isinstance(q, dict) else "").lower()
+    topic = st.session_state.meta.get("topic", "").lower()
+    field = st.session_state.meta.get("field_id", "").lower()
+    question = str(q.get("question", "")).lower()
 
-# Only attempt visuals in visual-friendly subjects
-if any(domain in field for domain in VISUAL_DOMAINS):
+    if any(domain in field for domain in VISUAL_DOMAINS):
 
-    search_text = f"{topic} {question}"
+        search_text = f"{topic} {question}"
 
-    for key, url in DIAGRAMS.items():
-        if key in search_text:
-            diagram = url
-            break
+        for key, url in DIAGRAMS.items():
+            if key in search_text:
+                diagram = url
+                break
 
-# Render diagram or fallback
-if diagram:
-    st.image(diagram, use_container_width=True)
-else:
-    st.caption("Concept diagram will appear when relevant 📊")
-
+    if diagram:
+        st.image(diagram, use_container_width=True)
+    else:
+        st.caption("Concept diagram will appear when relevant 📊")
 
 # ------------------ answer buttons ------------------
 
