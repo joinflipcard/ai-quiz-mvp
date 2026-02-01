@@ -1,3 +1,10 @@
+if st.button("Load All Topics"):
+    r = requests.get(f"{BACKEND}/all-topics")
+    topics = r.json()
+
+    st.write(f"Total topics: {len(topics)}")
+    st.dataframe(topics)
+
 import threading
 import streamlit as st
 import requests
