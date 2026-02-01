@@ -3,6 +3,13 @@ import streamlit as st
 import requests
 import uuid
 
+import threading
+import streamlit as st
+import requests
+import uuid
+
+BACKEND = "https://quiz.peterrazeghi.workers.dev"
+
 if st.button("Load All Topics"):
     r = requests.get(f"{BACKEND}/all-topics")
     topics = r.json()
