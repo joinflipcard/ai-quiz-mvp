@@ -198,10 +198,13 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     # 📊 STATIC CONCEPT DIAGRAM (fast & reliable)
     diagram = None
-    topic_text = st.session_state.meta["topic"].lower()
+
+    search_text = (
+        st.session_state.meta["topic"] + " " + q["question"]
+    ).lower()
 
     for key, url in DIAGRAMS.items():
-        if key.lower() in topic_text:
+        if key in search_text:
             diagram = url
             break
 
