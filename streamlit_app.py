@@ -204,7 +204,8 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     ).lower()
 
     for key, url in DIAGRAMS.items():
-        if key in search_text:
+        if key.replace(" ", "_") in st.session_state.meta["topic_id"] \
+        or key in topic_text:
             diagram = url
             break
 
