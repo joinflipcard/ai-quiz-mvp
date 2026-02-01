@@ -80,8 +80,6 @@ if st.button("Load All Topics"):
 
 st.title("Knowledge")
 
-BACKEND = "https://quiz.peterrazeghi.workers.dev"
-
 # ------------------ state ------------------
 
 if "user_id" not in st.session_state:
@@ -200,12 +198,14 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     topic_text = st.session_state.meta["topic"].lower()
 
     for key, url in DIAGRAMS.items():
-        if key in topic_text:
+        if key.lower() in topic_text:
             diagram = url
             break
 
     if diagram:
         st.image(diagram, use_container_width=True)
+    else:
+        st.caption("Concept diagram will appear when relevant 📊")
 
     if not st.session_state.show_feedback:
 
