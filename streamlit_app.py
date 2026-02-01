@@ -80,6 +80,17 @@ if st.button("Load All Topics"):
 
 st.title("Knowledge")
 
+st.subheader("📚 Mastery Progress")
+
+mastered_count = len(st.session_state.mastered_topics)
+
+st.metric(
+    label="Topics Mastered",
+    value=mastered_count
+)
+
+st.progress(min(mastered_count / 50, 1.0))  # 50 is just a starter goal
+
 # ------------------ state ------------------
 
 if "user_id" not in st.session_state:
