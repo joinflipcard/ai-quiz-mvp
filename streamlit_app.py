@@ -218,19 +218,11 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     else:
         st.caption("Concept diagram will appear when relevant 📊")
 
-# ------------------ answer buttons ------------------
+# ------------------ answers + feedback ------------------
 
 if not st.session_state.show_feedback:
 
-    if not isinstance(q, dict):
-        st.info("Loading question...")
-        st.stop()
-
-    choices = q.get("choices")
-
-    if not isinstance(choices, dict):
-        st.info("Loading choices...")
-        st.stop()
+    choices = q.get("choices", {})
 
     for letter, text in choices.items():
 
@@ -260,8 +252,6 @@ if not st.session_state.show_feedback:
             st.session_state.show_feedback = True
             st.rerun()
 
-# ------------------ feedback screen ------------------
-
 else:
     if st.session_state.last_correct:
         st.success("Correct! 🎉")
@@ -275,7 +265,6 @@ else:
         st.session_state.show_feedback = False
         st.session_state.index += 1
         st.rerun()
-
 
 # ------------------ finished ------------------
 
