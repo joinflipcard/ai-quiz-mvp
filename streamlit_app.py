@@ -207,9 +207,11 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     if any(domain in field for domain in VISUAL_DOMAINS):
 
         search_text = f"{topic} {question}".replace("_", "").replace(" ", "")
+        search_text = search_text.replace("_", "").replace(" ", "")
 
         for key, url in DIAGRAMS.items():
-            if key.replace(" ", "") in search_text:
+            clean_key = key.lower().replace(" ", "")
+            if clean_key in search_text or key in topic:
                 diagram = url
                 break
 
