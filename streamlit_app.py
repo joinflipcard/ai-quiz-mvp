@@ -80,8 +80,6 @@ if st.button("Load All Topics"):
 
 st.title("Knowledge")
 
-st.subheader("📚 Mastery Progress")
-
 mastered_count = len(st.session_state.mastered_topics)
 
 st.metric(
@@ -126,6 +124,11 @@ if "round_correct" not in st.session_state:
 if "mastered_topics" not in st.session_state:
     st.session_state.mastered_topics = set()
 
+mastered_count = len(st.session_state.mastered_topics)
+
+st.metric("Topics Mastered 🎯", mastered_count)
+st.progress(min(mastered_count / 50, 1.0))
+
 # ------------------ helpers ------------------
 
 def post(url, payload):
@@ -140,8 +143,12 @@ def post(url, payload):
 def prefetch_next():
     data, err = post(
         f"{BACKEND}/next-topic",
-        {"user_id": st.session_state.user_id}
+        {
+            "user_id": st.session_state.user_id,
+            "exclude": list(st.session_state.mastered_topics)
+        }
     )
+
     if err:
         return
 
@@ -164,7 +171,10 @@ if st.button("Start Quiz"):
 
     data, err = post(
         f"{BACKEND}/next-topic",
-        {"user_id": st.session_state.user_id}
+        {
+            "user_id": st.session_state.user_id,
+            "exclude": list(st.session_state.mastered_topics)
+        }
     )
 
     if err:
@@ -292,6 +302,11 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         if st.session_state.round_correct >= 3:
             st.success("Topic mastered! ✅")
+
+            mastered_id = st.session_state.meta.get("topic_id")
+            if mastered_id:
+                st.session_state.mastered_topics.add(mastered_id)
+
         else:
             st.info("Moving on to a new topic ➡️")
 
