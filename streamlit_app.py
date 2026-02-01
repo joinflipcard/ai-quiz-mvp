@@ -120,8 +120,11 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     st.subheader(q["question"])
 
     # 📸 SHOW IMAGE IF PRESENT (safe)
-    if q.get("image"):
+    if q.get("image") and isinstance(q["image"], str) and q["image"].startswith("http"):
+    try:
         st.image(q["image"], use_container_width=True)
+    except:
+        st.warning("Diagram unavailable for this question.")
 
     if not st.session_state.show_feedback:
 
