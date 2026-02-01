@@ -227,33 +227,39 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
 if not st.session_state.show_feedback:
 
-    for letter, text in q["choices"].items():
-        if st.button(
-            f"{letter}. {text}",
-            key=f"{st.session_state.index}-{letter}",
-            use_container_width=True
-        ):
+    choices = q.get("choices", {})
 
-            correct = (letter == q["correct"])
+    if isinstance(choices, dict):
 
-            post(
-                f"{BACKEND}/submit-answer",
-                {
-                    "user_id": st.session_state.user_id,
-                    "field_id": st.session_state.meta["field_id"],
-                    "topic_id": st.session_state.meta["topic_id"],
-                    "correct": correct
-                }
-            )
+        for letter, text in choices.items():
+            if st.button(
+                f"{letter}. {text}",
+                key=f"{st.session_state.index}-{letter}",
+                use_container_width=True
+            ):
 
-            st.session_state.last_correct = correct
-            if correct:
-                st.session_state.round_correct += 1
+                correct = (letter == q.get("correct"))
 
-            st.session_state.last_explanation = q["explanation"]
-            st.session_state.show_feedback = True
-            st.rerun()
+                post(
+                    f"{BACKEND}/submit-answer",
+                    {
+                        "user_id": st.session_state.user_id,
+                        "field_id": st.session_state.meta["field_id"],
+                        "topic_id": st.session_state.meta["topic_id"],
+                        "correct": correct
+                    }
+                )
 
+                st.session_state.last_correct = correct
+                if correct:
+                    st.session_state.round_correct += 1
+
+                st.session_state.last_explanation = q.get("explanation", "")
+                st.session_state.show_feedback = True
+                st.rerun()
+
+    else:
+        st.info("Loading choices...")
 
 # ------------------ feedback screen ------------------
 
