@@ -3,11 +3,6 @@ import streamlit as st
 import requests
 import uuid
 
-import threading
-import streamlit as st
-import requests
-import uuid
-
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 DIAGRAMS = {
@@ -214,7 +209,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         search_text = f"{topic} {question}"
 
         for key, url in DIAGRAMS.items():
-            if key in search_text:
+            if key.replace(" ", "") in search_text.replace("_", "").replace(" ", ""):
                 diagram = url
                 break
 
