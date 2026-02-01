@@ -1,3 +1,4 @@
+import threading
 import streamlit as st
 import requests
 import uuid
@@ -99,7 +100,7 @@ if st.button("Start Quiz"):
             st.session_state.show_feedback = False
             st.session_state.error = None
 
-            prefetch_next()
+            threading.Thread(target=prefetch_next, daemon=True).start()
 
 # ------------------ error display ------------------
 
@@ -188,7 +189,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         st.session_state.show_feedback = False
         st.session_state.round_correct = 0
 
-        prefetch_next()
+        threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
 
     # If prefetch still loading — fetch now (fallback)
@@ -216,6 +217,6 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
                 st.session_state.show_feedback = False
                 st.session_state.round_correct = 0
 
-                prefetch_next()
+                threading.Thread(target=prefetch_next, daemon=True).start()
                 st.rerun()
 
