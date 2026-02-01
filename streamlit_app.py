@@ -28,6 +28,11 @@ if "show_feedback" not in st.session_state:
     st.session_state.last_correct = False
     st.session_state.last_explanation = ""
 
+if "next_quiz" not in st.session_state:
+    st.session_state.next_quiz = []
+
+if "next_meta" not in st.session_state:
+    st.session_state.next_meta = {}
 
 # ------------------ helpers ------------------
 
@@ -39,7 +44,27 @@ def post(url, payload):
         return r.json(), None
     except Exception as e:
         return None, str(e)
+    
+def prefetch_next():
+    data, err = post(
+        f"{BACKEND}/next-topic",
+        {"user_id": st.session_state.user_id}
+    )
+    if err:
+        return
 
+    quiz_data, err = post(
+        f"{BACKEND}/generate-quiz",
+        {
+            "topic": data["topic"],
+            "start_difficulty": data["start_difficulty"]
+        }
+    )
+    if err:
+        return
+
+    st.session_state.next_meta = data
+    st.session_state.next_quiz = quiz_data["questions"]
 
 # ------------------ start quiz ------------------
 
@@ -71,6 +96,7 @@ if st.button("Start Quiz"):
             st.session_state.show_feedback = False
             st.session_state.error = None
 
+            prefetch_next()
 
 # ------------------ error display ------------------
 
@@ -134,4 +160,20 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 # ------------------ finished ------------------
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
-    st.success("Great work! New topic coming up 🚀")
+
+    if st.session_state.next_quiz:
+
+        st.success("Topic mastered! ✅")
+        st.info(f"Next up: {st.session_state.next_meta['topic']}")
+
+        st.session_state.quiz = st.session_state.next_quiz
+        st.session_state.meta = st.session_state.next_meta
+
+        st.session_state.next_quiz = []
+        st.session_state.next_meta = {}
+
+        st.session_state.index = 0
+        st.session_state.show_feedback = False
+
+        prefetch_next()
+        st.rerun()
