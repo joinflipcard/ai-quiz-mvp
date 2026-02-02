@@ -15,20 +15,27 @@ if "user_id" not in st.session_state:
 
     st.subheader("Login")
 
-    name = st.text_input("Your name")
-    code = st.text_input("Access code", type="password")
+    name = st.text_input("Your name").strip()
+    code = st.text_input("Access code", type="password").strip()
 
     if st.button("Enter"):
+
+        if not name or not code:
+            st.warning("Enter name and access code")
+            st.stop()
 
         try:
             r = requests.post(
                 f"{BACKEND}/login",
-                json={"name": name, "code": code},
+                json={
+                    "name": name,
+                    "code": code
+                },
                 timeout=10
             )
 
             if r.status_code != 200:
-                st.error("Invalid login")
+                st.error(f"Login failed: {r.text}")
                 st.stop()
 
             data = r.json()
