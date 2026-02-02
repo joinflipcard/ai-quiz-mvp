@@ -125,13 +125,18 @@ def post(url, payload):
         return r.json(), None
     except Exception as e:
         return None, str(e)
-    
+
+
+def get_mastered_count():
+    r = requests.get(f"{BACKEND}/all-topics", timeout=20)
+    return len(r.json())
+
+
 def prefetch_next():
     data, err = post(
         f"{BACKEND}/next-topic",
         {
-            "user_id": st.session_state.user_id,
-            "exclude": list(st.session_state.mastered_topics)
+            "user_id": st.session_state.user_id
         }
     )
 
@@ -207,26 +212,12 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         unsafe_allow_html=True
     )
 
-    # 📊 STATIC CONCEPT DIAGRAM (robust matching)
+    # 📊 IMAGE FROM BACKEND (LLM provided)
 
-    diagram = None
-    
-    topic = st.session_state.meta.get("topic", "").lower()
-    field = st.session_state.meta.get("field_id", "").lower()
-    question = str(q.get("question", "")).lower()
-    
-    if any(domain in field for domain in VISUAL_DOMAINS):
-    
-        for key, url in DIAGRAMS.items():
-            if key in topic or key in question:
-                diagram = url
-                break
-    
-    if diagram:
-        st.image(diagram, use_container_width=True)
-    else:
-        st.caption("Concept diagram will appear when relevant 📊")
+image_url = q.get("image")
 
+if image_url:
+    st.image(image_url, use_container_width=True)
 
     # ------------------ answers + feedback ------------------
 
@@ -280,67 +271,20 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
 
-    # 🚀 Fast path — use prefetched quiz
-    if st.session_state.next_quiz:
+    st.success("Topic completed 🎯")
 
-        # ✅ Mastery update (runs BEFORE rerender)
-        if st.session_state.round_correct >= 1:
-            topic_name = st.session_state.meta.get("topic")
+    st.info(f"Next up: {st.session_state.next_meta['topic']}")
 
-            if topic_name and topic_name not in st.session_state.mastered_topics:
-                st.session_state.mastered_topics.add(topic_name)
+    # Load next quiz
+    st.session_state.quiz = st.session_state.next_quiz
+    st.session_state.meta = st.session_state.next_meta
 
-            st.success("Topic mastered! ✅")
+    st.session_state.next_quiz = []
+    st.session_state.next_meta = {}
 
-        else:
-            st.info("Moving on to a new topic ➡️")
+    st.session_state.index = 0
+    st.session_state.show_feedback = False
+    st.session_state.round_correct = 0
 
-        st.info(f"Next up: {st.session_state.next_meta['topic']}")
-
-        # Swap quiz immediately
-        st.session_state.quiz = st.session_state.next_quiz
-        st.session_state.meta = st.session_state.next_meta
-
-        # Reset buffers
-        st.session_state.next_quiz = []
-        st.session_state.next_meta = {}
-
-        # Reset round
-        st.session_state.index = 0
-        st.session_state.show_feedback = False
-        st.session_state.round_correct = 0
-
-        # Prefetch again
-        threading.Thread(target=prefetch_next, daemon=True).start()
-
-        # 🔁 Force UI refresh AFTER mastery change
-        st.rerun()
-
-    # 🛟 Slow fallback
-    else:
-        st.info("Loading next topic...")
-
-        data = requests.post(
-            f"{BACKEND}/next-topic",
-            json={"user_id": st.session_state.user_id},
-            timeout=20
-        ).json()
-
-        quiz_data = requests.post(
-            f"{BACKEND}/generate-quiz",
-            json={
-                "topic": data["topic"],
-                "start_difficulty": 1
-            },
-            timeout=20
-        ).json()
-
-        st.session_state.quiz = quiz_data["questions"]
-        st.session_state.meta = data
-        st.session_state.index = 0
-        st.session_state.show_feedback = False
-        st.session_state.round_correct = 0
-
-        threading.Thread(target=prefetch_next, daemon=True).start()
-        st.rerun()
-
+    threading.Thread(target=prefetch_next, daemon=True).start()
+    st.rerun()
