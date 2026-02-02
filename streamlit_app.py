@@ -79,6 +79,11 @@ st.title("Knowledge")
 
 GOAL = 20  # adjust later if you want
 
+# ✅ CREATE USER FIRST (must come before API calls)
+if "user_id" not in st.session_state:
+    st.session_state.user_id = str(uuid.uuid4())
+
+# ✅ REAL DB MASTERY FETCH
 def fetch_mastered_count():
     r = requests.get(
         f"{BACKEND}/mastered-count",
@@ -91,7 +96,6 @@ mastered_count = fetch_mastered_count()
 
 st.progress(mastered_count / GOAL if GOAL else 0)
 st.caption(f"{mastered_count} of {GOAL} topics mastered")
-
 
 # ------------------ state ------------------
 
