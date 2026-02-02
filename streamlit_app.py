@@ -207,29 +207,26 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         unsafe_allow_html=True
     )
 
-    # 📊 STATIC CONCEPT DIAGRAM
+    # 📊 STATIC CONCEPT DIAGRAM (robust matching)
 
     diagram = None
-
+    
     topic = st.session_state.meta.get("topic", "").lower()
     field = st.session_state.meta.get("field_id", "").lower()
     question = str(q.get("question", "")).lower()
-
+    
     if any(domain in field for domain in VISUAL_DOMAINS):
-
-        search_text = f"{topic} {question}".replace("_", "").replace(" ", "")
-        search_text = search_text.replace("_", "").replace(" ", "")
-
+    
         for key, url in DIAGRAMS.items():
-            clean_key = key.lower().replace(" ", "")
-            if clean_key in search_text or key in topic:
+            if key in topic or key in question:
                 diagram = url
                 break
-
+    
     if diagram:
         st.image(diagram, use_container_width=True)
     else:
         st.caption("Concept diagram will appear when relevant 📊")
+
 
     # ------------------ answers + feedback ------------------
 
@@ -286,20 +283,21 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
     # 🚀 Fast path — use prefetched quiz
     if st.session_state.next_quiz:
 
-        # ✅ Mastery check
+        # ✅ Mastery update (runs BEFORE rerender)
         if st.session_state.round_correct >= 1:
-            st.success("Topic mastered! ✅")
-
             topic_name = st.session_state.meta.get("topic")
-            if topic_name:
+
+            if topic_name and topic_name not in st.session_state.mastered_topics:
                 st.session_state.mastered_topics.add(topic_name)
+
+            st.success("Topic mastered! ✅")
 
         else:
             st.info("Moving on to a new topic ➡️")
 
         st.info(f"Next up: {st.session_state.next_meta['topic']}")
 
-        # Swap in next quiz
+        # Swap quiz immediately
         st.session_state.quiz = st.session_state.next_quiz
         st.session_state.meta = st.session_state.next_meta
 
@@ -307,13 +305,15 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         st.session_state.next_quiz = []
         st.session_state.next_meta = {}
 
-        # Reset round state
+        # Reset round
         st.session_state.index = 0
         st.session_state.show_feedback = False
         st.session_state.round_correct = 0
 
         # Prefetch again
         threading.Thread(target=prefetch_next, daemon=True).start()
+
+        # 🔁 Force UI refresh AFTER mastery change
         st.rerun()
 
     # 🛟 Slow fallback
@@ -343,6 +343,4 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
-
-
 
