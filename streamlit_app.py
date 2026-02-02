@@ -294,9 +294,9 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         if st.session_state.round_correct >= 3:
             st.success("Topic mastered! ✅")
 
-            mastered_id = st.session_state.meta.get("topic_id")
-            if mastered_id:
-                st.session_state.mastered_topics.add(mastered_id)
+            topic_name = st.session_state.meta.get("topic")
+            if topic_name:
+                st.session_state.mastered_topics.add(topic_name)
                 st.session_state.mastered_topics = set(st.session_state.mastered_topics)
 
         else:
