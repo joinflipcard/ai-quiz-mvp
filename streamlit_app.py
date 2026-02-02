@@ -3,6 +3,9 @@ import streamlit as st
 import requests
 import uuid
 
+if "mastered_topics" not in st.session_state:
+    st.session_state.mastered_topics = set()
+
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 DIAGRAMS = {
@@ -72,22 +75,7 @@ VISUAL_DOMAINS = [
     "technology"
 ]
 
-if st.button("Load All Topics"):
-    r = requests.get(f"{BACKEND}/all-topics")
-    topics = r.json()
-    st.write(f"Total topics: {len(topics)}")
-    st.dataframe(topics)
-
 st.title("Knowledge")
-
-mastered_count = len(st.session_state.mastered_topics)
-
-st.metric(
-    label="Topics Mastered",
-    value=mastered_count
-)
-
-st.progress(min(mastered_count / 50, 1.0))  # 50 is just a starter goal
 
 # ------------------ state ------------------
 
@@ -119,10 +107,6 @@ if "next_meta" not in st.session_state:
 
 if "round_correct" not in st.session_state:
     st.session_state.round_correct = 0
-
-# ✅ Track mastered topics permanently in session
-if "mastered_topics" not in st.session_state:
-    st.session_state.mastered_topics = set()
 
 mastered_count = len(st.session_state.mastered_topics)
 
