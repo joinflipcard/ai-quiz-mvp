@@ -207,25 +207,19 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.info("Loading question...")
         st.stop()
 
-    st.markdown(
-        f"<div style='font-size:26px; line-height:1.4; margin-bottom:20px;'>{q['question']}</div>",
-        unsafe_allow_html=True
-    )
+    # 🧠 Question (LaTeX safe)
+    st.markdown(q["question"])
 
-    # 📊 IMAGE FROM BACKEND (LLM provided)
+    # 🖼️ Image from backend (if provided)
+    image_url = q.get("image")
+    if image_url:
+        st.image(image_url, use_container_width=True)
 
-image_url = q.get("image")
-
-if image_url:
-    st.image(image_url, use_container_width=True)
-
-    # ------------------ answers + feedback ------------------
+    # ------------------ answers ------------------
 
     if not st.session_state.show_feedback:
 
-        choices = q.get("choices", {})
-
-        for letter, text in choices.items():
+        for letter, text in q["choices"].items():
 
             if st.button(
                 f"{letter}. {text}",
@@ -233,7 +227,7 @@ if image_url:
                 use_container_width=True
             ):
 
-                correct = (letter == q.get("correct"))
+                correct = (letter == q["correct"])
 
                 post(
                     f"{BACKEND}/submit-answer",
@@ -245,11 +239,11 @@ if image_url:
                     }
                 )
 
-                st.session_state.last_correct = correct
                 if correct:
                     st.session_state.round_correct += 1
 
-                st.session_state.last_explanation = q.get("explanation", "")
+                st.session_state.last_correct = correct
+                st.session_state.last_explanation = q["explanation"]
                 st.session_state.show_feedback = True
                 st.rerun()
 
@@ -259,7 +253,6 @@ if image_url:
         else:
             st.error("Not quite ❌")
 
-        st.write("Explanation:")
         st.info(st.session_state.last_explanation)
 
         if st.button("Next Question"):
