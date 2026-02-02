@@ -115,11 +115,6 @@ if "next_meta" not in st.session_state:
 if "round_correct" not in st.session_state:
     st.session_state.round_correct = 0
 
-mastered_count = len(st.session_state.mastered_topics)
-
-st.metric("Topics Mastered 🎯", mastered_count)
-st.progress(min(mastered_count / 50, 1.0))
-
 # ------------------ helpers ------------------
 
 def post(url, payload):
@@ -298,7 +293,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
             topic_name = st.session_state.meta.get("topic")
             if topic_name:
                 st.session_state.mastered_topics.add(topic_name)
-                st.session_state.mastered_topics = set(st.session_state.mastered_topics)
+                st.session_state.mastered_topics = list(set(st.session_state.mastered_topics))
 
         else:
             st.info("Moving on to a new topic ➡️")
