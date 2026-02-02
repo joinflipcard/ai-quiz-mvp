@@ -280,40 +280,43 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             st.rerun()
 
 # ------------------ finished ------------------
-st.write("FINISHED BLOCK RUNNING")
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
 
-    # ✅ If prefetch finished — instant swap (fast path)
+    # 🚀 Fast path — use prefetched quiz
     if st.session_state.next_quiz:
 
+        # ✅ Mastery check
         if st.session_state.round_correct >= 1:
             st.success("Topic mastered! ✅")
 
             topic_name = st.session_state.meta.get("topic")
             if topic_name:
                 st.session_state.mastered_topics.add(topic_name)
-                st.session_state.mastered_topics = list(set(st.session_state.mastered_topics))
 
         else:
             st.info("Moving on to a new topic ➡️")
 
         st.info(f"Next up: {st.session_state.next_meta['topic']}")
 
+        # Swap in next quiz
         st.session_state.quiz = st.session_state.next_quiz
         st.session_state.meta = st.session_state.next_meta
 
+        # Reset buffers
         st.session_state.next_quiz = []
         st.session_state.next_meta = {}
 
+        # Reset round state
         st.session_state.index = 0
         st.session_state.show_feedback = False
         st.session_state.round_correct = 0
 
+        # Prefetch again
         threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
 
-    # 🛟 Fallback — force load immediately if prefetch not ready
+    # 🛟 Slow fallback
     else:
         st.info("Loading next topic...")
 
@@ -340,5 +343,6 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
+
 
 
