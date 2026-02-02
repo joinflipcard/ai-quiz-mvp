@@ -222,35 +222,34 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     # 🧠 Question
     st.markdown(q.get("question", ""))
 
-    # ------------------ IMAGE SYSTEM ------------------
+    # ------------------ VISUAL ENGINE (NO BROKEN ICONS EVER) ------------------
 
-    image_url = q.get("image")
-
-    def is_valid_image(url):
+    def valid_wiki(url):
         return (
             isinstance(url, str)
             and url.startswith("https://upload.wikimedia.org/")
-            and any(url.lower().endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp"])
+            and url.lower().endswith((".png", ".jpg", ".jpeg", ".svg", ".webp"))
         )
 
-    rendered = False
+    shown = False
 
-    # 1️⃣ LLM image (only if truly valid)
-    if is_valid_image(image_url):
-        st.image(image_url, use_container_width=True)
-        rendered = True
+    # 1️⃣ ONLY show backend image if it's real
+    backend_img = q.get("image")
+    if valid_wiki(backend_img):
+        st.image(backend_img, use_container_width=True)
+        shown = True
 
-    # 2️⃣ Fallback diagram match
-    if not rendered:
-        text = q.get("question", "").lower()
+    # 2️⃣ Smart fallback using topic + question text
+    if not shown:
+        text = (q.get("question", "") + " " + st.session_state.meta.get("topic", "")).lower()
 
         for key, url in DIAGRAMS.items():
             if key in text:
                 st.image(url, use_container_width=True)
-                rendered = True
+                shown = True
                 break
 
-    # ------------------ answers ------------------
+    # ------------------ ANSWERS ------------------
 
     if not st.session_state.show_feedback:
 
