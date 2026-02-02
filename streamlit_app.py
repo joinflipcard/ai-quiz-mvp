@@ -79,10 +79,19 @@ st.title("Knowledge")
 
 GOAL = 20  # adjust later if you want
 
-mastered_count = len(st.session_state.mastered_topics)
+def fetch_mastered_count():
+    r = requests.get(
+        f"{BACKEND}/mastered-count",
+        params={"user_id": st.session_state.user_id},
+        timeout=10
+    )
+    return r.json()["count"]
+
+mastered_count = fetch_mastered_count()
 
 st.progress(mastered_count / GOAL if GOAL else 0)
 st.caption(f"{mastered_count} of {GOAL} topics mastered")
+
 
 # ------------------ state ------------------
 
@@ -207,17 +216,13 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.info("Loading question...")
         st.stop()
 
-    # 🧠 Question (safe for LaTeX + text)
+    # 🧠 Question (safe render)
     st.markdown(q.get("question", ""))
 
-    # 🖼️ GUARANTEED SAFE IMAGE RENDER
+    # 🖼️ GUARANTEED SAFE IMAGE RENDER (no broken placeholders ever)
     image_url = q.get("image")
 
-    if (
-        isinstance(image_url, str)
-        and image_url.startswith("https://upload.wikimedia.org/")
-        and any(image_url.endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp"])
-    ):
+    if isinstance(image_url, str) and image_url.startswith("https://upload.wikimedia.org/"):
         st.image(image_url, use_container_width=True)
 
     # ------------------ answers ------------------
