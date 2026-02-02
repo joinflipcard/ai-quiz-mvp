@@ -154,20 +154,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     # 🧠 Question
     st.markdown(q.get("question", ""))
 
-    # 🖼️ Direct Wikimedia render (bypasses Streamlit CDN bug)
-    image_url = q.get("image")
-    st.write("DEBUG image_url:", image_url)
-    st.write("DEBUG topic:", st.session_state.meta.get("topic"))
-
-    if isinstance(image_url, str) and image_url.startswith("http"):
-        st.components.v1.html(
-            f"""
-            <div style="text-align:center;margin:20px 0;">
-                <img src="{image_url}" style="max-width:100%;height:auto;" />
-            </div>
-            """,
-            height=420,
-        )
+    # Images temporarily disabled
 
     # ------------------ answers ------------------
 
