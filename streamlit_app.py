@@ -214,6 +214,9 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     q = st.session_state.quiz[st.session_state.index]
 
+    st.caption("DEBUG — Question payload:")
+    st.json(q)
+
     if not isinstance(q, dict):
         st.info("Loading question...")
         st.stop()
