@@ -266,18 +266,42 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
     st.success("Topic completed 🎯")
 
-    st.info(f"Next up: {st.session_state.next_meta['topic']}")
+    # If prefetch ready → fast swap
+    if st.session_state.next_quiz and st.session_state.next_meta:
 
-    # Load next quiz
-    st.session_state.quiz = st.session_state.next_quiz
-    st.session_state.meta = st.session_state.next_meta
+        next_topic = st.session_state.next_meta.get("topic", "New topic")
 
-    st.session_state.next_quiz = []
-    st.session_state.next_meta = {}
+        st.info(f"Next up: {next_topic}")
 
+        st.session_state.quiz = st.session_state.next_quiz
+        st.session_state.meta = st.session_state.next_meta
+
+        st.session_state.next_quiz = []
+        st.session_state.next_meta = {}
+
+    # Otherwise fetch immediately (safe fallback)
+    else:
+        data, _ = post(
+            f"{BACKEND}/next-topic",
+            {"user_id": st.session_state.user_id}
+        )
+
+        quiz_data, _ = post(
+            f"{BACKEND}/generate-quiz",
+            {
+                "topic": data["topic"],
+                "start_difficulty": data["start_difficulty"]
+            }
+        )
+
+        st.session_state.quiz = quiz_data["questions"]
+        st.session_state.meta = data
+
+    # Reset round state
     st.session_state.index = 0
     st.session_state.show_feedback = False
     st.session_state.round_correct = 0
 
+    # Prefetch again
     threading.Thread(target=prefetch_next, daemon=True).start()
     st.rerun()
