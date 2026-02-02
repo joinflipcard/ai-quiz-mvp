@@ -8,76 +8,9 @@ if "mastered_topics" not in st.session_state:
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
-DIAGRAMS = {
-
-# ================= BIOLOGY =================
-"cell": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Animal_cell_structure_en.svg",
-"cell structure": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Animal_cell_structure_en.svg",
-"mitosis": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Mitosis_stages.svg",
-"meiosis": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Meiosis_Stages.svg",
-"dna": "https://upload.wikimedia.org/wikipedia/commons/8/87/DNA_double_helix_vertical.png",
-"photosynthesis": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Photosynthesis_overview.svg",
-"ecosystem": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Food_web.svg",
-"energy flow": "https://upload.wikimedia.org/wikipedia/commons/5/5f/Trophic_levels.svg",
-"nervous system": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Nervous_system_diagram.svg",
-
-# ================= CHEMISTRY =================
-"periodic table": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Periodic_table_large.svg",
-"atomic structure": "https://upload.wikimedia.org/wikipedia/commons/8/82/Bohr_atom_model.svg",
-"bond": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Ionic_and_covalent_bonds.png",
-"molecular shape": "https://upload.wikimedia.org/wikipedia/commons/0/0c/VSEPR_shapes.png",
-"reaction energy": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Reaction_coordinate_diagram.svg",
-"ph scale": "https://upload.wikimedia.org/wikipedia/commons/3/3b/PH_scale.svg",
-"gas laws": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Gas_laws.svg",
-
-# ================= PHYSICS =================
-"motion": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Velocity_time_graph.png",
-"acceleration": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Acceleration_graph.svg",
-"force": "https://upload.wikimedia.org/wikipedia/commons/6/6b/Free_body_diagram2.svg",
-"projectile": "https://upload.wikimedia.org/wikipedia/commons/7/7c/Projectile_motion.svg",
-"electric field": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Electric_field_lines.svg",
-"circuit": "https://upload.wikimedia.org/wikipedia/commons/1/1c/Series_and_parallel_circuits.svg",
-"wave": "https://upload.wikimedia.org/wikipedia/commons/5/5d/Wave_interference.svg",
-
-# ================= EARTH SCIENCE =================
-"plate tectonics": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Plate_tectonics.svg",
-"earth layers": "https://upload.wikimedia.org/wikipedia/commons/0/04/Earth_layers.svg",
-"rock cycle": "https://upload.wikimedia.org/wikipedia/commons/1/1d/Rock_cycle.svg",
-"water cycle": "https://upload.wikimedia.org/wikipedia/commons/9/9b/Water_cycle.svg",
-"volcano": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Volcano_cross_section.svg",
-
-# ================= MATH =================
-"graph": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Coordinate_plane.svg",
-"slope": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Slope_rise_run.svg",
-"triangle": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Triangle_angles_sum.svg",
-"probability": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Probability_tree.svg",
-
-# ================= ECONOMICS =================
-"supply": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Supply_and_demand.svg",
-"demand": "https://upload.wikimedia.org/wikipedia/commons/3/3e/Supply_and_demand.svg",
-"scarcity": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Production_possibilities_frontier_curve.svg",
-
-# ================= TECHNOLOGY =================
-"algorithm": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Flowchart_example.svg",
-"database": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Database_schema.svg",
-"internet": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Internet_packet_routing.svg",
-}
-
-VISUAL_DOMAINS = [
-    "biology",
-    "chemistry",
-    "physics",
-    "geography",
-    "earth",
-    "mathematics",
-    "math",
-    "economics",
-    "technology"
-]
-
 st.title("Knowledge")
 
-GOAL = 20   # total topics target (adjust later)
+GOAL = 173   # total topics target (adjust later)
 
 def fetch_mastered_count():
     try:
