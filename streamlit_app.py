@@ -291,7 +291,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
     # ✅ If prefetch finished — instant swap (fast path)
     if st.session_state.next_quiz:
 
-        if st.session_state.round_correct >= 3:
+        if st.session_state.round_correct >= 1:
             st.success("Topic mastered! ✅")
 
             topic_name = st.session_state.meta.get("topic")
