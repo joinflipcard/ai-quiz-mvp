@@ -3,36 +3,48 @@ import streamlit as st
 import requests
 import uuid
 
-if "mastered_topics" not in st.session_state:
-    st.session_state.mastered_topics = set()
-
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 st.title("Knowledge")
 
 GOAL = 173   # total topics target (adjust later)
 
-def fetch_mastered_count():
-    try:
-        r = requests.get(
-            f"{BACKEND}/mastered-count",
-            params={"user_id": st.session_state.user_id},
-            timeout=5
-        )
-        data = r.json()
-        return int(data.get("count", 0))
-    except:
-        return 0
+# ------------------ login ------------------
 
-mastered_count = fetch_mastered_count()
+if "user_id" not in st.session_state:
 
-st.progress(mastered_count / GOAL if GOAL else 0)
-st.caption(f"{mastered_count} of {GOAL} topics mastered")
+    st.subheader("Login")
+
+    name = st.text_input("Your name")
+    code = st.text_input("Access code", type="password")
+
+    if st.button("Enter"):
+
+        try:
+            r = requests.post(
+                f"{BACKEND}/login",
+                json={"name": name, "code": code},
+                timeout=10
+            )
+
+            if r.status_code != 200:
+                st.error("Invalid login")
+                st.stop()
+
+            data = r.json()
+            st.session_state.user_id = data["user_id"]
+
+            st.rerun()
+
+        except Exception as e:
+            st.error(str(e))
+            st.stop()
+
+    st.stop()
 
 # ------------------ state ------------------
 
-if "user_id" not in st.session_state:
-    st.session_state.user_id = str(uuid.uuid4())
+# user_id now comes from login and persists across devices
 
 if "quiz" not in st.session_state:
     st.session_state.quiz = []
@@ -85,17 +97,18 @@ def prefetch_next():
         }
     )
 
-    if err:
+    if err or not data:
         return
 
     quiz_data, err = post(
         f"{BACKEND}/generate-quiz",
         {
             "topic": data["topic"],
-            "start_difficulty": data["start_difficulty"]
+            "field": data["field"]
         }
     )
-    if err:
+
+    if err or not quiz_data:
         return
 
     st.session_state.next_meta = data
@@ -108,8 +121,7 @@ if st.button("Start Quiz"):
     data, err = post(
         f"{BACKEND}/next-topic",
         {
-            "user_id": st.session_state.user_id,
-            "exclude": list(st.session_state.mastered_topics)
+            "user_id": st.session_state.user_id
         }
     )
 
@@ -122,7 +134,7 @@ if st.button("Start Quiz"):
             f"{BACKEND}/generate-quiz",
             {
                 "topic": data["topic"],
-                "start_difficulty": data["start_difficulty"]
+                "field": data["field"]
             }
         )
 
@@ -238,7 +250,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
             f"{BACKEND}/generate-quiz",
             {
                 "topic": data["topic"],
-                "start_difficulty": data["start_difficulty"]
+                "field": data["field"]
             }
         )
 
@@ -258,4 +270,3 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
     threading.Thread(target=prefetch_next, daemon=True).start()
 
     st.rerun()
-
