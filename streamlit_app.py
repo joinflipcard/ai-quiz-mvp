@@ -285,6 +285,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             st.rerun()
 
 # ------------------ finished ------------------
+st.write("FINISHED BLOCK RUNNING")
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
 
