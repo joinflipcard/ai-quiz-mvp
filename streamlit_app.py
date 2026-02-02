@@ -157,7 +157,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     # 🖼️ Direct Wikimedia render (bypasses Streamlit CDN bug)
     image_url = q.get("image")
 
-    if isinstance(image_url, str) and image_url.startswith("https://upload.wikimedia.org/"):
+    if isinstance(image_url, str) and image_url.startswith("http"):
         st.components.v1.html(
             f"""
             <div style="text-align:center;margin:20px 0;">
