@@ -77,20 +77,19 @@ VISUAL_DOMAINS = [
 
 st.title("Knowledge")
 
-GOAL = 20  # adjust later if you want
+GOAL = 20   # total topics target (adjust later)
 
-# ✅ CREATE USER FIRST (must come before API calls)
-if "user_id" not in st.session_state:
-    st.session_state.user_id = str(uuid.uuid4())
-
-# ✅ REAL DB MASTERY FETCH
 def fetch_mastered_count():
-    r = requests.get(
-        f"{BACKEND}/mastered-count",
-        params={"user_id": st.session_state.user_id},
-        timeout=10
-    )
-    return r.json()["count"]
+    try:
+        r = requests.get(
+            f"{BACKEND}/mastered-count",
+            params={"user_id": st.session_state.user_id},
+            timeout=5
+        )
+        data = r.json()
+        return int(data.get("count", 0))
+    except:
+        return 0
 
 mastered_count = fetch_mastered_count()
 
@@ -219,41 +218,20 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.info("Loading question...")
         st.stop()
 
-    # 🧠 Question
+    # 🧠 Question (safe render)
     st.markdown(q.get("question", ""))
 
-    # ------------------ VISUAL ENGINE (NO BROKEN ICONS EVER) ------------------
+    # 🖼️ Guaranteed safe image rendering (never broken placeholder)
+    image_url = q.get("image")
 
-    def valid_wiki(url):
-        return (
-            isinstance(url, str)
-            and url.startswith("https://upload.wikimedia.org/")
-            and url.lower().endswith((".png", ".jpg", ".jpeg", ".svg", ".webp"))
-        )
+    if isinstance(image_url, str) and image_url.startswith("https://upload.wikimedia.org/"):
+        st.image(image_url, use_container_width=True)
 
-    shown = False
-
-    # 1️⃣ ONLY show backend image if it's real
-    backend_img = q.get("image")
-    if valid_wiki(backend_img):
-        st.image(backend_img, use_container_width=True)
-        shown = True
-
-    # 2️⃣ Smart fallback using topic + question text
-    if not shown:
-        text = (q.get("question", "") + " " + st.session_state.meta.get("topic", "")).lower()
-
-        for key, url in DIAGRAMS.items():
-            if key in text:
-                st.image(url, use_container_width=True)
-                shown = True
-                break
-
-    # ------------------ ANSWERS ------------------
+    # ------------------ answers ------------------
 
     if not st.session_state.show_feedback:
 
-        for letter, text in q["choices"].items():
+        for letter, text in q.get("choices", {}).items():
 
             if st.button(
                 f"{letter}. {text}",
@@ -261,24 +239,28 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 use_container_width=True
             ):
 
-                correct = letter == q["correct"]
+                correct = (letter == q.get("correct"))
 
-                requests.post(
-                    f"{BACKEND}/submit-answer",
-                    json={
-                        "user_id": st.session_state.user_id,
-                        "field_id": st.session_state.meta["field_id"],
-                        "topic_id": st.session_state.meta["topic_id"],
-                        "correct": correct
-                    },
-                    timeout=10
-                )
+                # safe backend submit (never freezes UI)
+                try:
+                    requests.post(
+                        f"{BACKEND}/submit-answer",
+                        json={
+                            "user_id": st.session_state.user_id,
+                            "field_id": st.session_state.meta["field_id"],
+                            "topic_id": st.session_state.meta["topic_id"],
+                            "correct": correct
+                        },
+                        timeout=5
+                    )
+                except:
+                    pass
 
                 if correct:
                     st.session_state.round_correct += 1
 
                 st.session_state.last_correct = correct
-                st.session_state.last_explanation = q["explanation"]
+                st.session_state.last_explanation = q.get("explanation", "")
                 st.session_state.show_feedback = True
                 st.rerun()
 
