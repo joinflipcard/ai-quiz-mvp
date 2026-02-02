@@ -209,7 +209,6 @@ if st.button("Start Quiz"):
 if st.session_state.error:
     st.error(st.session_state.error)
 
-
 # ------------------ quiz display + visuals + answers ------------------
 
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
@@ -220,22 +219,41 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.info("Loading question...")
         st.stop()
 
-    # 🧠 Question (safe render)
+    # 🧠 Question
     st.markdown(q.get("question", ""))
 
-    # 🖼️ GUARANTEED SAFE IMAGE RENDER (no broken placeholders ever)
+    # 🖼️ IMAGE SYSTEM (LLM first → fallback diagrams always work)
+
     image_url = q.get("image")
 
-    if isinstance(image_url, str) and image_url.startswith("https://upload.wikimedia.org/"):
-        st.image(image_url, use_container_width=True)
+    rendered_image = False
+
+    # Try image from backend (LLM)
+    if (
+        isinstance(image_url, str)
+        and image_url.startswith("https://upload.wikimedia.org/")
+        and any(image_url.endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp"])
+    ):
+        try:
+            st.image(image_url, use_container_width=True)
+            rendered_image = True
+        except:
+            rendered_image = False
+
+    # Fallback to built-in diagram library
+    if not rendered_image:
+        question_text = q.get("question", "").lower()
+
+        for key, url in DIAGRAMS.items():
+            if key in question_text:
+                st.image(url, use_container_width=True)
+                break
 
     # ------------------ answers ------------------
 
     if not st.session_state.show_feedback:
 
-        choices = q.get("choices", {})
-
-        for letter, text in choices.items():
+        for letter, text in q["choices"].items():
 
             if st.button(
                 f"{letter}. {text}",
@@ -243,23 +261,24 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 use_container_width=True
             ):
 
-                correct = (letter == q.get("correct"))
+                correct = (letter == q["correct"])
 
-                post(
+                requests.post(
                     f"{BACKEND}/submit-answer",
-                    {
+                    json={
                         "user_id": st.session_state.user_id,
                         "field_id": st.session_state.meta["field_id"],
                         "topic_id": st.session_state.meta["topic_id"],
                         "correct": correct
-                    }
+                    },
+                    timeout=10
                 )
 
                 if correct:
                     st.session_state.round_correct += 1
 
                 st.session_state.last_correct = correct
-                st.session_state.last_explanation = q.get("explanation", "")
+                st.session_state.last_explanation = q["explanation"]
                 st.session_state.show_feedback = True
                 st.rerun()
 
