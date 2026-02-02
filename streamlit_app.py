@@ -222,31 +222,32 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     # 🧠 Question
     st.markdown(q.get("question", ""))
 
-    # 🖼️ IMAGE SYSTEM (LLM first → fallback diagrams always work)
+    # ------------------ IMAGE SYSTEM ------------------
 
     image_url = q.get("image")
 
-    rendered_image = False
+    def is_valid_image(url):
+        return (
+            isinstance(url, str)
+            and url.startswith("https://upload.wikimedia.org/")
+            and any(url.lower().endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp"])
+        )
 
-    # Try image from backend (LLM)
-    if (
-        isinstance(image_url, str)
-        and image_url.startswith("https://upload.wikimedia.org/")
-        and any(image_url.endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp"])
-    ):
-        try:
-            st.image(image_url, use_container_width=True)
-            rendered_image = True
-        except:
-            rendered_image = False
+    rendered = False
 
-    # Fallback to built-in diagram library
-    if not rendered_image:
-        question_text = q.get("question", "").lower()
+    # 1️⃣ LLM image (only if truly valid)
+    if is_valid_image(image_url):
+        st.image(image_url, use_container_width=True)
+        rendered = True
+
+    # 2️⃣ Fallback diagram match
+    if not rendered:
+        text = q.get("question", "").lower()
 
         for key, url in DIAGRAMS.items():
-            if key in question_text:
+            if key in text:
                 st.image(url, use_container_width=True)
+                rendered = True
                 break
 
     # ------------------ answers ------------------
@@ -261,7 +262,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 use_container_width=True
             ):
 
-                correct = (letter == q["correct"])
+                correct = letter == q["correct"]
 
                 requests.post(
                     f"{BACKEND}/submit-answer",
