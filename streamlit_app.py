@@ -77,6 +77,13 @@ VISUAL_DOMAINS = [
 
 st.title("Knowledge")
 
+GOAL = 20  # adjust later if you want
+
+mastered_count = len(st.session_state.mastered_topics)
+
+st.progress(mastered_count / GOAL if GOAL else 0)
+st.caption(f"{mastered_count} of {GOAL} topics mastered")
+
 # ------------------ state ------------------
 
 if "user_id" not in st.session_state:
@@ -290,6 +297,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
             mastered_id = st.session_state.meta.get("topic_id")
             if mastered_id:
                 st.session_state.mastered_topics.add(mastered_id)
+                st.session_state.mastered_topics = set(st.session_state.mastered_topics)
 
         else:
             st.info("Moving on to a new topic ➡️")
