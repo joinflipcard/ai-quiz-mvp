@@ -207,19 +207,26 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.info("Loading question...")
         st.stop()
 
-    # 🧠 Question (LaTeX safe)
-    st.markdown(q["question"])
+    # 🧠 Question (safe for LaTeX + text)
+    st.markdown(q.get("question", ""))
 
-    # 🖼️ Image from backend (if provided)
+    # 🖼️ GUARANTEED SAFE IMAGE RENDER
     image_url = q.get("image")
-    if image_url:
+
+    if (
+        isinstance(image_url, str)
+        and image_url.startswith("https://upload.wikimedia.org/")
+        and any(image_url.endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp"])
+    ):
         st.image(image_url, use_container_width=True)
 
     # ------------------ answers ------------------
 
     if not st.session_state.show_feedback:
 
-        for letter, text in q["choices"].items():
+        choices = q.get("choices", {})
+
+        for letter, text in choices.items():
 
             if st.button(
                 f"{letter}. {text}",
@@ -227,7 +234,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 use_container_width=True
             ):
 
-                correct = (letter == q["correct"])
+                correct = (letter == q.get("correct"))
 
                 post(
                     f"{BACKEND}/submit-answer",
@@ -243,7 +250,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                     st.session_state.round_correct += 1
 
                 st.session_state.last_correct = correct
-                st.session_state.last_explanation = q["explanation"]
+                st.session_state.last_explanation = q.get("explanation", "")
                 st.session_state.show_feedback = True
                 st.rerun()
 
