@@ -214,6 +214,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     q = st.session_state.quiz[st.session_state.index]
 
+    # DEBUG (keep for now — proves backend sends image)
     st.caption("DEBUG — Question payload:")
     st.json(q)
 
@@ -221,14 +222,22 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.info("Loading question...")
         st.stop()
 
-    # 🧠 Question (safe render)
+    # 🧠 Question
     st.markdown(q.get("question", ""))
 
-    # 🖼️ Guaranteed safe image rendering (never broken placeholder)
+    # 🖼️ Wikimedia-safe direct browser load (bypasses Streamlit proxy bug)
     image_url = q.get("image")
 
     if isinstance(image_url, str) and image_url.startswith("https://upload.wikimedia.org/"):
-        st.image(image_url, use_container_width=True)
+
+        st.components.v1.html(
+            f"""
+            <div style="text-align:center; margin:18px 0;">
+                <img src="{image_url}" style="max-width:100%; height:auto;" />
+            </div>
+            """,
+            height=420,
+        )
 
     # ------------------ answers ------------------
 
@@ -244,7 +253,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
                 correct = (letter == q.get("correct"))
 
-                # safe backend submit (never freezes UI)
+                # Safe backend submit (won’t freeze UI)
                 try:
                     requests.post(
                         f"{BACKEND}/submit-answer",
