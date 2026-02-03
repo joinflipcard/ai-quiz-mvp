@@ -217,11 +217,9 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         if st.session_state.round_correct >= 3:
             st.success("Topic mastered 🎉")
 
-            if mastered_id:
-                import time
-                time.sleep(0.3)   # allow backend to commit mastery
-                st.rerun()
-
+            # allow backend to commit mastery before refreshing progress
+            import time
+            time.sleep(0.3)
 
         else:
             st.info("Topic not yet mastered — keep practicing 💪")
@@ -247,9 +245,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         data = requests.post(
             f"{BACKEND}/next-topic",
-            json={
-                "user_id": st.session_state.user_id,
-            },
+            json={"user_id": st.session_state.user_id},
             timeout=20
         ).json()
 
@@ -270,3 +266,4 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
+
