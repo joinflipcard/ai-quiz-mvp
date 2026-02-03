@@ -40,23 +40,18 @@ if "user_id" not in st.session_state:
 
 # ------------------ PROGRESS ------------------
 
-if "total_topics" not in st.session_state:
+total_topics = st.session_state.get("total_topics", 0)
+
+if not total_topics:
     r = requests.get(f"{BACKEND}/all-topics")
     st.session_state.total_topics = len(r.json())
+    total_topics = st.session_state.total_topics
 
-if "mastered_topics" not in st.session_state:
-    st.session_state.mastered_topics = set()
-
-total_topics = st.session_state.total_topics
 mastered_count = len(st.session_state.mastered_topics)
 
-st.markdown(
-    f"### Progress: {mastered_count} / {total_topics} topics mastered"
-)
+st.markdown(f"### Progress: {mastered_count} / {total_topics} topics mastered")
 
 progress_ratio = mastered_count / total_topics if total_topics else 0
-
-# grey background → blue fill grows automatically
 st.progress(progress_ratio)
 
 # ------------------ STATE ------------------
