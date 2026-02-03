@@ -49,19 +49,15 @@ if "mastered_topics" not in st.session_state:
 
 total_topics = st.session_state.total_topics
 mastered_count = len(st.session_state.mastered_topics)
-remaining_count = total_topics - mastered_count
 
-st.metric("Topics Mastered 🎯", f"{mastered_count} / {total_topics}")
+st.markdown(
+    f"### Progress: {mastered_count} / {total_topics} topics mastered"
+)
 
-progress = mastered_count / total_topics if total_topics else 0
-st.progress(progress)
+progress_ratio = mastered_count / total_topics if total_topics else 0
 
-progress_df = pd.DataFrame({
-    "Status": ["Mastered", "Remaining"],
-    "Topics": [mastered_count, remaining_count]
-})
-
-st.bar_chart(progress_df.set_index("Status"))
+# grey background → blue fill grows automatically
+st.progress(progress_ratio)
 
 # ------------------ STATE ------------------
 
