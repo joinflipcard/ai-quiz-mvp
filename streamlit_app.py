@@ -2,7 +2,6 @@ import threading
 import streamlit as st
 import requests
 import uuid
-import pandas as pd
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
@@ -40,19 +39,26 @@ if "user_id" not in st.session_state:
 
 # ------------------ PROGRESS ------------------
 
-total_topics = st.session_state.get("total_topics", 0)
+# Get mastered topics count from backend (persistent per user)
+count_res = requests.get(
+    f"{BACKEND}/mastered-count",
+    params={"user_id": st.session_state.user_id},
+    timeout=10
+).json()
 
-if not total_topics:
+mastered_count = count_res["count"]
+
+# Get total topics once per session
+if "total_topics" not in st.session_state:
     r = requests.get(f"{BACKEND}/all-topics")
     st.session_state.total_topics = len(r.json())
-    total_topics = st.session_state.total_topics
 
-mastered_count = len(st.session_state.mastered_topics)
+total_topics = st.session_state.total_topics
 
 st.markdown(f"### Progress: {mastered_count} / {total_topics} topics mastered")
 
-progress_ratio = mastered_count / total_topics if total_topics else 0
-st.progress(progress_ratio)
+# Grey bar fills blue as mastery grows
+st.progress(mastered_count / total_topics if total_topics else 0)
 
 # ------------------ STATE ------------------
 
@@ -98,7 +104,6 @@ def prefetch_next():
         f"{BACKEND}/next-topic",
         {
             "user_id": st.session_state.user_id,
-            "exclude": list(st.session_state.mastered_topics)
         }
     )
 
@@ -127,7 +132,6 @@ if st.button("Start Quiz"):
         f"{BACKEND}/next-topic",
         {
             "user_id": st.session_state.user_id,
-            "exclude": list(st.session_state.mastered_topics)
         }
     )
 
@@ -213,10 +217,11 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         if st.session_state.round_correct >= 3:
             st.success("Topic mastered 🎉")
 
-            mastered_id = st.session_state.meta.get("topic_id")
             if mastered_id:
-                st.session_state.mastered_topics.add(mastered_id)
-                st.rerun()   # refresh progress bar immediately
+                import time
+                time.sleep(0.3)   # allow backend to commit mastery
+                st.rerun()
+
 
         else:
             st.info("Topic not yet mastered — keep practicing 💪")
@@ -244,7 +249,6 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
             f"{BACKEND}/next-topic",
             json={
                 "user_id": st.session_state.user_id,
-                "exclude": list(st.session_state.mastered_topics)
             },
             timeout=20
         ).json()
