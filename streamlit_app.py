@@ -212,6 +212,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
 
+    # ⚡ Fast path — use prefetched next topic
     if st.session_state.next_quiz:
 
         if st.session_state.round_correct >= 3:
@@ -220,6 +221,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
             mastered_id = st.session_state.meta.get("topic_id")
             if mastered_id:
                 st.session_state.mastered_topics.add(mastered_id)
+                st.rerun()   # refresh progress bar immediately
 
         else:
             st.info("Topic not yet mastered — keep practicing 💪")
@@ -239,6 +241,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
 
+    # 🛟 Fallback — load immediately if prefetch not ready
     else:
         st.info("Loading next topic...")
 
