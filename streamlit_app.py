@@ -2,14 +2,13 @@ import threading
 import streamlit as st
 import requests
 import uuid
+import pandas as pd
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 st.title("Knowledge")
 
-GOAL = 173   # total topics target (adjust later)
-
-# ------------------ login ------------------
+# ------------------ LOGIN ------------------
 
 if "user_id" not in st.session_state:
 
@@ -24,34 +23,47 @@ if "user_id" not in st.session_state:
             st.warning("Enter name and access code")
             st.stop()
 
-        try:
-            r = requests.post(
-                f"{BACKEND}/login",
-                json={
-                    "name": name,
-                    "code": code
-                },
-                timeout=10
-            )
+        r = requests.post(
+            f"{BACKEND}/login",
+            json={"name": name, "code": code},
+            timeout=10
+        )
 
-            if r.status_code != 200:
-                st.error(f"Login failed: {r.text}")
-                st.stop()
-
-            data = r.json()
-            st.session_state.user_id = data["user_id"]
-
-            st.rerun()
-
-        except Exception as e:
-            st.error(str(e))
+        if r.status_code != 200:
+            st.error(f"Login failed: {r.text}")
             st.stop()
+
+        st.session_state.user_id = r.json()["user_id"]
+        st.rerun()
 
     st.stop()
 
-# ------------------ state ------------------
+# ------------------ PROGRESS ------------------
 
-# user_id now comes from login and persists across devices
+if "total_topics" not in st.session_state:
+    r = requests.get(f"{BACKEND}/all-topics")
+    st.session_state.total_topics = len(r.json())
+
+if "mastered_topics" not in st.session_state:
+    st.session_state.mastered_topics = set()
+
+total_topics = st.session_state.total_topics
+mastered_count = len(st.session_state.mastered_topics)
+remaining_count = total_topics - mastered_count
+
+st.metric("Topics Mastered 🎯", f"{mastered_count} / {total_topics}")
+
+progress = mastered_count / total_topics if total_topics else 0
+st.progress(progress)
+
+progress_df = pd.DataFrame({
+    "Status": ["Mastered", "Remaining"],
+    "Topics": [mastered_count, remaining_count]
+})
+
+st.bar_chart(progress_df.set_index("Status"))
+
+# ------------------ STATE ------------------
 
 if "quiz" not in st.session_state:
     st.session_state.quiz = []
@@ -79,7 +91,7 @@ if "next_meta" not in st.session_state:
 if "round_correct" not in st.session_state:
     st.session_state.round_correct = 0
 
-# ------------------ helpers ------------------
+# ------------------ HELPERS ------------------
 
 def post(url, payload):
     try:
@@ -90,17 +102,12 @@ def post(url, payload):
     except Exception as e:
         return None, str(e)
 
-
-def get_mastered_count():
-    r = requests.get(f"{BACKEND}/all-topics", timeout=20)
-    return len(r.json())
-
-
 def prefetch_next():
     data, err = post(
         f"{BACKEND}/next-topic",
         {
-            "user_id": st.session_state.user_id
+            "user_id": st.session_state.user_id,
+            "exclude": list(st.session_state.mastered_topics)
         }
     )
 
@@ -111,7 +118,7 @@ def prefetch_next():
         f"{BACKEND}/generate-quiz",
         {
             "topic": data["topic"],
-            "field": data["field"]
+            "start_difficulty": data["start_difficulty"]
         }
     )
 
@@ -121,14 +128,15 @@ def prefetch_next():
     st.session_state.next_meta = data
     st.session_state.next_quiz = quiz_data["questions"]
 
-# ------------------ start quiz ------------------
+# ------------------ START QUIZ ------------------
 
 if st.button("Start Quiz"):
 
     data, err = post(
         f"{BACKEND}/next-topic",
         {
-            "user_id": st.session_state.user_id
+            "user_id": st.session_state.user_id,
+            "exclude": list(st.session_state.mastered_topics)
         }
     )
 
@@ -141,7 +149,7 @@ if st.button("Start Quiz"):
             f"{BACKEND}/generate-quiz",
             {
                 "topic": data["topic"],
-                "field": data["field"]
+                "start_difficulty": data["start_difficulty"]
             }
         )
 
@@ -155,68 +163,48 @@ if st.button("Start Quiz"):
 
             threading.Thread(target=prefetch_next, daemon=True).start()
 
-# ------------------ error display ------------------
+# ------------------ ERROR ------------------
 
 if st.session_state.error:
     st.error(st.session_state.error)
 
-# ------------------ quiz display + visuals + answers ------------------
+# ------------------ QUIZ ------------------
 
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
 
     q = st.session_state.quiz[st.session_state.index]
 
-    if not isinstance(q, dict):
-        st.info("Loading question...")
-        st.stop()
-
-    # 🧠 Question
-    st.markdown(q.get("question", ""))
-
-    # Images temporarily disabled
-
-    # ------------------ answers ------------------
+    st.markdown(f"### {q['question']}")
 
     if not st.session_state.show_feedback:
 
-        for letter, text in q.get("choices", {}).items():
+        for letter, text in q["choices"].items():
 
-            if st.button(
-                f"{letter}. {text}",
-                key=f"{st.session_state.index}-{letter}",
-                use_container_width=True
-            ):
+            if st.button(f"{letter}. {text}", key=f"{st.session_state.index}-{letter}"):
 
-                correct = (letter == q.get("correct"))
+                correct = (letter == q["correct"])
 
-                try:
-                    requests.post(
-                        f"{BACKEND}/submit-answer",
-                        json={
-                            "user_id": st.session_state.user_id,
-                            "field_id": st.session_state.meta["field_id"],
-                            "topic_id": st.session_state.meta["topic_id"],
-                            "correct": correct
-                        },
-                        timeout=5
-                    )
-                except:
-                    pass
+                requests.post(
+                    f"{BACKEND}/submit-answer",
+                    json={
+                        "user_id": st.session_state.user_id,
+                        "field_id": st.session_state.meta["field_id"],
+                        "topic_id": st.session_state.meta["topic_id"],
+                        "correct": correct
+                    },
+                    timeout=5
+                )
 
                 if correct:
                     st.session_state.round_correct += 1
 
                 st.session_state.last_correct = correct
-                st.session_state.last_explanation = q.get("explanation", "")
+                st.session_state.last_explanation = q["explanation"]
                 st.session_state.show_feedback = True
                 st.rerun()
 
     else:
-        if st.session_state.last_correct:
-            st.success("Correct! 🎉")
-        else:
-            st.error("Not quite ❌")
-
+        st.success("Correct! 🎉" if st.session_state.last_correct else "Not quite ❌")
         st.info(st.session_state.last_explanation)
 
         if st.button("Next Question"):
@@ -224,17 +212,23 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             st.session_state.index += 1
             st.rerun()
 
-# ------------------ finished ------------------
+# ------------------ FINISHED ------------------
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
 
-    st.success("Topic completed 🎯")
+    if st.session_state.next_quiz:
 
-    # ---------- FAST PATH: use prefetched quiz ----------
-    if st.session_state.next_quiz and st.session_state.next_meta:
+        if st.session_state.round_correct >= 3:
+            st.success("Topic mastered 🎉")
 
-        next_topic = st.session_state.next_meta.get("topic", "New topic")
-        st.info(f"Next up: {next_topic}")
+            mastered_id = st.session_state.meta.get("topic_id")
+            if mastered_id:
+                st.session_state.mastered_topics.add(mastered_id)
+
+        else:
+            st.info("Topic not yet mastered — keep practicing 💪")
+
+        st.info(f"Next up: {st.session_state.next_meta['topic']}")
 
         st.session_state.quiz = st.session_state.next_quiz
         st.session_state.meta = st.session_state.next_meta
@@ -242,38 +236,39 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         st.session_state.next_quiz = []
         st.session_state.next_meta = {}
 
-    # ---------- SAFE FALLBACK ----------
+        st.session_state.index = 0
+        st.session_state.show_feedback = False
+        st.session_state.round_correct = 0
+
+        threading.Thread(target=prefetch_next, daemon=True).start()
+        st.rerun()
+
     else:
-        data, err = post(
+        st.info("Loading next topic...")
+
+        data = requests.post(
             f"{BACKEND}/next-topic",
-            {"user_id": st.session_state.user_id}
-        )
+            json={
+                "user_id": st.session_state.user_id,
+                "exclude": list(st.session_state.mastered_topics)
+            },
+            timeout=20
+        ).json()
 
-        if not data or "topic" not in data:
-            st.warning("Loading next topic...")
-            st.stop()
-
-        quiz_data, err = post(
+        quiz_data = requests.post(
             f"{BACKEND}/generate-quiz",
-            {
+            json={
                 "topic": data["topic"],
-                "field": data["field"]
-            }
-        )
-
-        if not quiz_data or "questions" not in quiz_data:
-            st.warning("Generating questions, please wait...")
-            st.stop()
+                "start_difficulty": data["start_difficulty"]
+            },
+            timeout=20
+        ).json()
 
         st.session_state.quiz = quiz_data["questions"]
         st.session_state.meta = data
+        st.session_state.index = 0
+        st.session_state.show_feedback = False
+        st.session_state.round_correct = 0
 
-    # ---------- RESET STATE ----------
-    st.session_state.index = 0
-    st.session_state.show_feedback = False
-    st.session_state.round_correct = 0
-
-    # ---------- PREFETCH NEXT ROUND ----------
-    threading.Thread(target=prefetch_next, daemon=True).start()
-
-    st.rerun()
+        threading.Thread(target=prefetch_next, daemon=True).start()
+        st.rerun()
