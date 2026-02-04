@@ -136,6 +136,22 @@ def prefetch_next():
     st.session_state.next_meta = data
     st.session_state.next_quiz = quiz_data["questions"]
 
+# ------------------ DIFFICULTY SELECT ------------------
+
+difficulty = st.radio(
+    "Difficulty:",
+    ["Easy", "Medium", "Hard"],
+    index=1   # default = Medium
+)
+
+difficulty_map = {
+    "Easy": "easy",
+    "Medium": "medium",
+    "Hard": "hard"
+}
+
+selected_difficulty = difficulty_map[difficulty]
+
 # ------------------ START QUIZ ------------------
 
 if st.button("Start Quiz"):
@@ -157,7 +173,7 @@ if st.button("Start Quiz"):
                 f"{BACKEND}/generate-quiz",
                 {
                     "topic": data["topic"],
-                    "start_difficulty": data["start_difficulty"]
+                    "start_difficulty": selected_difficulty
                 }
             )
 
