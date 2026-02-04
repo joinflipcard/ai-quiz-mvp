@@ -165,6 +165,16 @@ if st.session_state.error:
 
 # ------------------ QUIZ ------------------
 
+# Force blue radio buttons
+st.markdown("""
+<style>
+div[role="radiogroup"] input[type="radio"] {
+    accent-color: #1f77ff;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
 
     q = st.session_state.quiz[st.session_state.index]
@@ -179,10 +189,15 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         selected = st.radio(
             "Choose an answer:",
             options,
+            index=None,   # 👈 THIS removes default selection
             key=f"radio-{st.session_state.index}"
         )
 
         if st.button("Submit answer"):
+
+            if selected is None:
+                st.warning("Please choose an answer first")
+                st.stop()
 
             letter = selected.split(".")[0]
             correct = (letter == q["correct"])
