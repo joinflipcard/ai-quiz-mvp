@@ -189,7 +189,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         selected = st.radio(
             "Choose an answer:",
             options,
-            index=None,   # 👈 THIS removes default selection
+            index=None,
             key=f"radio-{st.session_state.index}"
         )
 
@@ -222,7 +222,13 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             st.rerun()
 
     else:
-        st.success("Correct! 🎉" if st.session_state.last_correct else "Not quite ❌")
+        if st.session_state.last_correct:
+            st.success("Correct! 🎉")
+        else:
+            correct_letter = q["correct"]
+            correct_text = q["choices"][correct_letter]
+            st.error(f"Correct answer: {correct_letter}. {correct_text}")
+
         st.info(st.session_state.last_explanation)
 
         if st.button("Next Question"):
