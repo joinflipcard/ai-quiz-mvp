@@ -135,35 +135,6 @@ def prefetch_next():
 
     st.session_state.next_meta = data
     st.session_state.next_quiz = quiz_data["questions"]
-    
-# ------------------ PRACTICE ANY TOPIC ------------------
-
-st.subheader("Practice any topic")
-
-custom_topic = st.text_input("Enter a topic you want to practice:")
-
-if st.button("Practice topic") and custom_topic.strip():
-
-    quiz_data, err = post(
-        f"{BACKEND}/generate-quiz",
-        {
-            "topic": custom_topic.strip(),
-            "start_difficulty": "medium"
-        }
-    )
-
-    if err:
-        st.error(err)
-    else:
-        st.session_state.quiz = quiz_data["questions"]
-        st.session_state.index = 0
-        st.session_state.show_feedback = False
-
-        # Mark as practice mode (won't affect mastery)
-        st.session_state.meta = {
-            "field_id": None,
-            "topic_id": None
-        }
 
 # ------------------ START QUIZ ------------------
 
@@ -181,13 +152,14 @@ if st.button("Start Quiz"):
     else:
         st.session_state.meta = data
 
-        quiz_data, err = post(
-            f"{BACKEND}/generate-quiz",
-            {
-                "topic": data["topic"],
-                "start_difficulty": data["start_difficulty"]
-            }
-        )
+        with st.spinner("Generating questions..."):
+            quiz_data, err = post(
+                f"{BACKEND}/generate-quiz",
+                {
+                    "topic": data["topic"],
+                    "start_difficulty": data["start_difficulty"]
+                }
+            )
 
         if err:
             st.session_state.error = err
@@ -198,6 +170,39 @@ if st.button("Start Quiz"):
             st.session_state.error = None
 
             threading.Thread(target=prefetch_next, daemon=True).start()
+
+
+st.divider()
+
+# ------------------ PRACTICE ANY TOPIC ------------------
+
+st.subheader("Practice any topic")
+
+custom_topic = st.text_input("Enter a topic you want to practice:")
+
+if st.button("Practice topic") and custom_topic.strip():
+
+    with st.spinner("Generating questions..."):
+        quiz_data, err = post(
+            f"{BACKEND}/generate-quiz",
+            {
+                "topic": custom_topic.strip(),
+                "start_difficulty": "medium"
+            }
+        )
+
+    if err:
+        st.error(err)
+    else:
+        st.session_state.quiz = quiz_data["questions"]
+        st.session_state.index = 0
+        st.session_state.show_feedback = False
+
+        # Practice mode (does not affect mastery)
+        st.session_state.meta = {
+            "field_id": None,
+            "topic_id": None
+        }
 
 # ------------------ ERROR ------------------
 
