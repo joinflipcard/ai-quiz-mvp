@@ -5,7 +5,19 @@ import uuid
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
-st.title("Knowledge")
+st.set_page_config(
+    page_title="Knowledge",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
+
+st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 # ------------------ LOGIN ------------------
 
@@ -123,6 +135,35 @@ def prefetch_next():
 
     st.session_state.next_meta = data
     st.session_state.next_quiz = quiz_data["questions"]
+    
+# ------------------ PRACTICE ANY TOPIC ------------------
+
+st.subheader("Practice any topic")
+
+custom_topic = st.text_input("Enter a topic you want to practice:")
+
+if st.button("Practice topic") and custom_topic.strip():
+
+    quiz_data, err = post(
+        f"{BACKEND}/generate-quiz",
+        {
+            "topic": custom_topic.strip(),
+            "start_difficulty": "medium"
+        }
+    )
+
+    if err:
+        st.error(err)
+    else:
+        st.session_state.quiz = quiz_data["questions"]
+        st.session_state.index = 0
+        st.session_state.show_feedback = False
+
+        # Mark as practice mode (won't affect mastery)
+        st.session_state.meta = {
+            "field_id": None,
+            "topic_id": None
+        }
 
 # ------------------ START QUIZ ------------------
 
