@@ -17,11 +17,6 @@ st.markdown("</div>", unsafe_allow_html=True)
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
-st.set_page_config(
-    page_title="Knowledge",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
 
 st.markdown("""
 <style>
