@@ -170,33 +170,41 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     q = st.session_state.quiz[st.session_state.index]
 
     st.markdown(f"### {q['question']}")
+    st.write("")
 
     if not st.session_state.show_feedback:
 
-        for letter, text in q["choices"].items():
+        options = [f"{k}. {v}" for k, v in q["choices"].items()]
 
-            if st.button(f"{letter}. {text}", key=f"{st.session_state.index}-{letter}"):
+        selected = st.radio(
+            "Choose an answer:",
+            options,
+            key=f"radio-{st.session_state.index}"
+        )
 
-                correct = (letter == q["correct"])
+        if st.button("Submit answer"):
 
-                requests.post(
-                    f"{BACKEND}/submit-answer",
-                    json={
-                        "user_id": st.session_state.user_id,
-                        "field_id": st.session_state.meta["field_id"],
-                        "topic_id": st.session_state.meta["topic_id"],
-                        "correct": correct
-                    },
-                    timeout=5
-                )
+            letter = selected.split(".")[0]
+            correct = (letter == q["correct"])
 
-                if correct:
-                    st.session_state.round_correct += 1
+            requests.post(
+                f"{BACKEND}/submit-answer",
+                json={
+                    "user_id": st.session_state.user_id,
+                    "field_id": st.session_state.meta["field_id"],
+                    "topic_id": st.session_state.meta["topic_id"],
+                    "correct": correct
+                },
+                timeout=5
+            )
 
-                st.session_state.last_correct = correct
-                st.session_state.last_explanation = q["explanation"]
-                st.session_state.show_feedback = True
-                st.rerun()
+            if correct:
+                st.session_state.round_correct += 1
+
+            st.session_state.last_correct = correct
+            st.session_state.last_explanation = q["explanation"]
+            st.session_state.show_feedback = True
+            st.rerun()
 
     else:
         st.success("Correct! 🎉" if st.session_state.last_correct else "Not quite ❌")
