@@ -3,6 +3,10 @@ import streamlit as st
 import requests
 import uuid
 
+st.markdown("<div style='text-align:center'>", unsafe_allow_html=True)
+st.image("assets/131.png", width=120)
+st.markdown("</div>", unsafe_allow_html=True)
+
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 st.set_page_config(
