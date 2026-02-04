@@ -3,7 +3,15 @@ import streamlit as st
 import requests
 import uuid
 
-st.markdown("<div style='text-align:center'>", unsafe_allow_html=True)
+# MUST be first Streamlit call
+st.set_page_config(
+    page_title="Knowledge",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
+
+# App logo
+st.markdown("<div style='text-align:center; margin-bottom: 20px;'>", unsafe_allow_html=True)
 st.image("assets/131.png", width=120)
 st.markdown("</div>", unsafe_allow_html=True)
 
