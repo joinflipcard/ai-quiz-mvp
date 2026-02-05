@@ -6,25 +6,25 @@ import uuid
 # MUST be first Streamlit call
 st.set_page_config(
     page_title="Knowledge",
-        layout="centered",
-            initial_sidebar_state="collapsed"
-            )
+    page_icon="assets/icon.png",   # or icon.ico
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-            # App logo
-            st.markdown("<div style='text-align:center; margin-bottom: 20px;'>", unsafe_allow_html=True)
-            st.image("assets/131.png", width=120)
-            st.markdown("</div>", unsafe_allow_html=True)
+# App logo
+st.markdown("<div style='text-align:center; margin-bottom: 20px;'>", unsafe_allow_html=True)
+st.image("assets/131.png", width=120)
+st.markdown("</div>", unsafe_allow_html=True)
 
-            BACKEND = "https://quiz.peterrazeghi.workers.dev"
+BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
-
-            st.markdown("""
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            header {visibility: hidden;}
-            </style>
-            """, unsafe_allow_html=True)
+st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
 
 # ------------------ LOGIN ------------------
 
