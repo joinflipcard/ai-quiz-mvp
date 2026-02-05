@@ -210,14 +210,41 @@ st.subheader("Practice any topic")
 
 custom_topic = st.text_input("Enter a topic you want to practice:")
 
+# init practice state
+if "practice_mode" not in st.session_state:
+    st.session_state.practice_mode = False
+
+if "practice_difficulty" not in st.session_state:
+    st.session_state.practice_difficulty = "medium"
+
+if "practice_streak" not in st.session_state:
+    st.session_state.practice_streak = 0
+
+
+def bump_difficulty(up=True):
+    levels = ["easy", "medium", "hard", "advanced", "challenge"]
+    i = levels.index(st.session_state.practice_difficulty)
+
+    if up and i < len(levels) - 1:
+        st.session_state.practice_difficulty = levels[i + 1]
+    elif not up and i > 0:
+        st.session_state.practice_difficulty = levels[i - 1]
+
+
 if st.button("Practice topic") and custom_topic.strip():
 
-    with st.spinner("Generating questions..."):
+    st.session_state.practice_mode = True
+    st.session_state.practice_topic = custom_topic.strip()
+    st.session_state.practice_difficulty = "medium"
+    st.session_state.practice_streak = 0
+
+    with st.spinner("Generating question..."):
         quiz_data, err = post(
             f"{BACKEND}/generate-quiz",
             {
-                "topic": custom_topic.strip(),
-                "start_difficulty": "medium"
+                "topic": st.session_state.practice_topic,
+                "start_difficulty": st.session_state.practice_difficulty,
+                "num_questions": 1
             }
         )
 
@@ -228,7 +255,7 @@ if st.button("Practice topic") and custom_topic.strip():
         st.session_state.index = 0
         st.session_state.show_feedback = False
 
-        # Practice mode (does not affect mastery)
+        # practice mode doesn't affect mastery
         st.session_state.meta = {
             "field_id": None,
             "topic_id": None
