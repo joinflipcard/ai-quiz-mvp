@@ -216,7 +216,7 @@ st.divider()
 st.markdown("### Difficulty")
 
 difficulty = st.radio(
-    "Choose difficulty:",
+    "Choose level:",
     ["Easy", "Medium", "Hard"],
     horizontal=True,
     index=1
@@ -251,14 +251,14 @@ def start_quiz(topic, num_questions=4):
     st.session_state.show_feedback = False
     st.session_state.round_correct = 0
 
-    # Non-mastery modes don’t affect topic mastery
+    # non-mastery modes don’t affect topic mastery
     st.session_state.meta = {
         "field_id": None,
         "topic_id": None
     }
 
 
-# -------- General Knowledge (adaptive mastery mode) --------
+# -------- General Knowledge (adaptive mastery) --------
 
 if st.session_state.get("selected_mode") == "🎯 General Knowledge":
 
@@ -278,7 +278,7 @@ if st.session_state.get("selected_mode") == "🎯 General Knowledge":
                 {
                     "topic": data["topic"],
                     "start_difficulty": data["start_difficulty"],
-                    "num_questions": 3   # mastery mode stays 3
+                    "num_questions": 3
                 }
             )
 
@@ -293,15 +293,15 @@ if st.session_state.get("selected_mode") == "🎯 General Knowledge":
             threading.Thread(target=prefetch_next, daemon=True).start()
 
 
-# -------- Field Buttons (trivia style — always 4 questions) --------
+# -------- Trivia Categories (always 4 random questions) --------
 
 field_map = {
-    "🧪 Science": "Science",
-    "🏀 Sports": "Sports",
-    "🎬 Entertainment": "Entertainment",
-    "📜 History": "History",
-    "🌍 Geography": "Geography",
-    "📰 Recent News": "Recent News"
+    "🧪 Science": "Science trivia",
+    "🏀 Sports": "sports trivia",
+    "🎬 Entertainment": "movie and celebrity trivia",
+    "📜 History": "history trivia",
+    "🌍 Geography": "world geography trivia",
+    "📰 Recent News": "current events trivia"
 }
 
 selected = st.session_state.get("selected_mode")
@@ -310,7 +310,7 @@ if selected in field_map:
     start_quiz(field_map[selected], num_questions=4)
 
 
-# -------- Pick Your Topic (4 questions, adaptive difficulty) --------
+# -------- Pick Your Topic --------
 
 if st.session_state.get("selected_mode") == "custom":
     start_quiz(st.session_state.custom_topic, num_questions=4)
