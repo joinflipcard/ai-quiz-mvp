@@ -151,7 +151,18 @@ def prefetch_next():
 
 # ------------------ QUIZ MENU ------------------
 
-st.subheader("Choose a topic")
+st.markdown("## Choose a category")
+
+st.markdown("""
+<style>
+.category-btn button {
+    height: 70px;
+    font-size: 1.05rem;
+    border-radius: 14px;
+    font-weight: 600;
+}
+</style>
+""", unsafe_allow_html=True)
 
 menu_items = [
     "🎯 General Knowledge",
@@ -166,12 +177,26 @@ menu_items = [
 if "selected_mode" not in st.session_state:
     st.session_state.selected_mode = None
 
-cols = st.columns(2)
+rows = [
+    st.columns(2),
+    st.columns(2),
+    st.columns(2),
+    st.columns(1)
+]
 
-for i, label in enumerate(menu_items):
-    with cols[i % 2]:
-        if st.button(label, use_container_width=True):
-            st.session_state.selected_mode = label
+i = 0
+for row in rows:
+    for col in row:
+        if i >= len(menu_items):
+            break
+        with col:
+            if st.button(
+                menu_items[i],
+                key=f"cat-{i}",
+                use_container_width=True
+            ):
+                st.session_state.selected_mode = menu_items[i]
+        i += 1
 
 # ------------------ PICK YOUR TOPIC ------------------
 
