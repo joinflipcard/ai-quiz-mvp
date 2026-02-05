@@ -58,37 +58,25 @@ if "user_id" not in st.session_state:
 
 # ------------------ PROGRESS ------------------
 
-try:
-    r = requests.get(
-        f"{BACKEND}/mastered-count",
-        params={"user_id": st.session_state.user_id},
-        timeout=10
-    )
+# init accuracy tracking
+if "total_answered" not in st.session_state:
+    st.session_state.total_answered = 0
 
-    if r.status_code == 200:
-        data = r.json()
-        mastered_count = data.get("count", 0)
-    else:
-        mastered_count = 0
+if "total_correct" not in st.session_state:
+    st.session_state.total_correct = 0
 
-except Exception:
-    mastered_count = 0
+# calculate percent (avoid divide by zero)
+if st.session_state.total_answered == 0:
+    accuracy = 0
+else:
+    accuracy = st.session_state.total_correct / st.session_state.total_answered
 
+st.markdown(
+    f"### Accuracy: {round(accuracy * 100)}%  "
+    f"({st.session_state.total_correct} / {st.session_state.total_answered} correct)"
+)
 
-# (temporary total until we convert to % correct later)
-if "total_topics" not in st.session_state:
-    try:
-        r2 = requests.get(f"{BACKEND}/all-topics", timeout=10)
-        st.session_state.total_topics = len(r2.json())
-    except Exception:
-        st.session_state.total_topics = 1
-
-total_topics = st.session_state.total_topics
-
-
-st.markdown(f"### Progress: {mastered_count} / {total_topics} topics mastered")
-
-st.progress(mastered_count / total_topics if total_topics else 0)
+st.progress(accuracy)
 
 # ------------------ STATE ------------------
 
@@ -365,8 +353,11 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 timeout=5
             )
 
+            st.session_state.total_answered += 1
             if correct:
+                st.session_state.total_correct += 1
                 st.session_state.round_correct += 1
+
 
             st.session_state.last_correct = correct
             st.session_state.last_explanation = q.get("explanation", "")
