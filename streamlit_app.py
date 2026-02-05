@@ -325,29 +325,37 @@ if st.session_state.error:
 st.markdown("""
 <style>
 .quiz-card {
-    background: #f9fafc;
-    padding: 22px;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,.06);
-    margin-bottom: 20px;
+    background: #ffffff;
+    padding: 26px;
+    border-radius: 18px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.08);
+    margin-bottom: 18px;
 }
 
 .quiz-question {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     font-weight: 600;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+    line-height: 1.4;
 }
 
 .feedback-good {
-    background:#e8fff2;
-    padding:14px;
-    border-radius:12px;
+    background:#e9fff3;
+    padding:16px;
+    border-radius:14px;
+    font-weight:600;
 }
 
 .feedback-bad {
     background:#ffecec;
-    padding:14px;
-    border-radius:12px;
+    padding:16px;
+    border-radius:14px;
+    font-weight:600;
+}
+
+.stButton button {
+    border-radius: 12px;
+    height: 48px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -364,7 +372,6 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     if not st.session_state.show_feedback:
 
-        # safety check
         if not isinstance(q.get("choices"), dict):
             st.session_state.index += 1
             st.rerun()
@@ -372,33 +379,29 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         options = [f"{k}. {v}" for k, v in q["choices"].items()]
 
         selected = st.radio(
-            "Choose one:",
+            "Select an answer:",
             options,
             index=None,
             key=f"radio-{st.session_state.index}"
         )
 
-        if st.button("Submit"):
+        if st.button("Submit answer", use_container_width=True):
 
             if selected is None:
-                st.warning("Pick an answer first")
+                st.warning("Choose an option first")
                 st.stop()
 
             letter = selected.split(".")[0].strip().upper()
-
             correct_raw = q.get("correct")
 
-            # skip broken AI output safely
             if not isinstance(correct_raw, str):
                 st.session_state.index += 1
                 st.session_state.show_feedback = False
                 st.rerun()
 
             correct_key = correct_raw.strip().upper()
-
             correct = (letter == correct_key)
 
-            # backend submit (safe even for practice)
             requests.post(
                 f"{BACKEND}/submit-answer",
                 json={
@@ -410,7 +413,6 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 timeout=5
             )
 
-            # progress tracking
             st.session_state.total_answered += 1
             if correct:
                 st.session_state.total_correct += 1
@@ -429,14 +431,8 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 unsafe_allow_html=True
             )
         else:
-            correct_raw = q.get("correct")
-
-            if isinstance(correct_raw, str):
-                correct_letter = correct_raw.strip().upper()
-                correct_text = q["choices"].get(correct_letter, "Unknown")
-            else:
-                correct_letter = "?"
-                correct_text = "Unavailable"
+            correct_letter = q.get("correct", "?")
+            correct_text = q["choices"].get(correct_letter, "Unknown")
 
             st.markdown(
                 f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
@@ -445,75 +441,110 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
         st.info(st.session_state.last_explanation)
 
-        if st.button("Next"):
+        if st.button("Next question →", use_container_width=True):
             st.session_state.show_feedback = False
             st.session_state.index += 1
             st.rerun()
-
 # ------------------ FINISHED ------------------
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
 
     score = st.session_state.round_correct
     total = len(st.session_state.quiz)
-    percent = int((score / total) * 100)
+
+    if total == 0:
+        percent = 0
+    else:
+        percent = int((score / total) * 100)
 
     st.markdown("### Round complete 🎯")
     st.progress(percent / 100)
     st.markdown(f"**You got {score} out of {total} correct ({percent}%)**")
 
-    if score >= int(total * 0.75):
+    if percent >= 75:
         st.success("Great job — moving you forward 🚀")
     else:
-        st.info("Good practice — let’s keep improving 💪")
+        st.info("Nice effort — let’s keep practicing 💪")
 
     st.write("")
 
-    if st.button("Next Topic ▶"):
+    if st.button("Next round ▶", use_container_width=True):
 
-        # reset round
+        # reset round state
         st.session_state.round_correct = 0
         st.session_state.show_feedback = False
         st.session_state.index = 0
 
-        # use prefetched if ready
-        if st.session_state.next_quiz:
+        selected = st.session_state.get("selected_mode")
 
-            st.session_state.quiz = st.session_state.next_quiz
-            st.session_state.meta = st.session_state.next_meta
+        # --- General Knowledge keeps adaptive flow ---
+        if selected == "🎯 General Knowledge":
 
-            st.session_state.next_quiz = []
-            st.session_state.next_meta = {}
+            data, err = post(
+                f"{BACKEND}/next-topic",
+                {"user_id": st.session_state.user_id}
+            )
+
+            if err or not data:
+                st.error("Couldn't load next topic — try again")
+                st.stop()
+
+            st.session_state.meta = data
+
+            quiz_data, err = post(
+                f"{BACKEND}/generate-quiz",
+                {
+                    "topic": data["topic"],
+                    "start_difficulty": data["start_difficulty"],
+                    "num_questions": 3
+                }
+            )
+
+            if err:
+                st.error("Generation failed — retry")
+                st.stop()
+
+            st.session_state.quiz = quiz_data["questions"]
 
             threading.Thread(target=prefetch_next, daemon=True).start()
             st.rerun()
 
-        # fallback load
-        data, err = post(
-            f"{BACKEND}/next-topic",
-            {"user_id": st.session_state.user_id}
-        )
+        # --- All other modes: repeat same category ---
+        else:
 
-        if err or not data:
-            st.error("Couldn't load next topic — try again")
-            st.stop()
-
-        quiz_data, err = post(
-            f"{BACKEND}/generate-quiz",
-            {
-                "topic": data["topic"],
-                "start_difficulty": data["start_difficulty"]
+            field_map = {
+                "🧪 Science": "Science trivia",
+                "🏀 Sports": "sports trivia",
+                "🎬 Entertainment": "movie and celebrity trivia",
+                "📜 History": "history trivia",
+                "🌍 Geography": "world geography trivia",
+                "📰 Recent News": "current events trivia"
             }
-        )
 
-        if err or not quiz_data:
-            st.error("Generation failed — retry")
-            st.stop()
+            if selected == "custom":
+                topic = st.session_state.custom_topic
+            else:
+                topic = field_map.get(selected)
 
-        st.session_state.quiz = quiz_data["questions"]
-        st.session_state.meta = data
+            if not topic:
+                st.session_state.quiz = []
+                st.rerun()
 
-        threading.Thread(target=prefetch_next, daemon=True).start()
-        st.rerun()
+            quiz_data, err = post(
+                f"{BACKEND}/generate-quiz",
+                {
+                    "topic": topic,
+                    "start_difficulty": selected_difficulty,
+                    "num_questions": 4
+                }
+            )
+
+            if err:
+                st.error("Generation failed — retry")
+                st.stop()
+
+            st.session_state.quiz = quiz_data["questions"]
+            st.rerun()
+
 
 
