@@ -109,14 +109,21 @@ if "round_correct" not in st.session_state:
 
 # ------------------ HELPERS ------------------
 
-def post(url, payload):
-    try:
-        r = requests.post(url, json=payload, timeout=20)
-        if r.status_code != 200:
-            return None, r.text
-        return r.json(), None
-    except Exception as e:
-        return None, str(e)
+def post(url, payload, retries=2):
+    for attempt in range(retries + 1):
+        try:
+            r = requests.post(url, json=payload, timeout=90)
+            if r.status_code == 200:
+                return r.json(), None
+            else:
+                err = r.text
+        except requests.exceptions.ReadTimeout:
+            err = "Backend took too long — retrying..."
+
+        if attempt < retries:
+            continue
+
+    return None, err
 
 def prefetch_next():
     data, err = post(
@@ -370,24 +377,30 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
 
-    # 🛟 Fallback — load immediately if prefetch not ready
+        # 🛟 Fallback — load immediately if prefetch not ready
     else:
         st.info("Loading next topic...")
 
-        data = requests.post(
+        data, err = post(
             f"{BACKEND}/next-topic",
-            json={"user_id": st.session_state.user_id},
-            timeout=20
-        ).json()
+            {"user_id": st.session_state.user_id}
+        )
 
-        quiz_data = requests.post(
+        if err or not data:
+            st.error("Failed to load next topic — try again")
+            st.stop()
+
+        quiz_data, err = post(
             f"{BACKEND}/generate-quiz",
-            json={
+            {
                 "topic": data["topic"],
                 "start_difficulty": data["start_difficulty"]
-            },
-            timeout=20
-        ).json()
+            }
+        )
+
+        if err or not quiz_data:
+            st.error("Question generation took too long — retrying helps")
+            st.stop()
 
         st.session_state.quiz = quiz_data["questions"]
         st.session_state.meta = data
