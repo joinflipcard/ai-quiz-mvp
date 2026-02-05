@@ -385,45 +385,48 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
 
-    # ⚡ Fast path — use prefetched next topic
-    if st.session_state.next_quiz:
+    score = st.session_state.round_correct
+    total = len(st.session_state.quiz)
+    percent = int((score / total) * 100)
 
-        if st.session_state.round_correct >= 3:
-            st.success("Topic mastered 🎉")
+    st.markdown("### Round complete 🎯")
+    st.progress(percent / 100)
+    st.markdown(f"**You got {score} out of {total} correct ({percent}%)**")
 
-            # allow backend to commit mastery before refreshing progress
-            import time
-            time.sleep(0.3)
-
-        else:
-            st.info("Topic not yet mastered — keep practicing 💪")
-
-        st.info(f"Next up: {st.session_state.next_meta['topic']}")
-
-        st.session_state.quiz = st.session_state.next_quiz
-        st.session_state.meta = st.session_state.next_meta
-
-        st.session_state.next_quiz = []
-        st.session_state.next_meta = {}
-
-        st.session_state.index = 0
-        st.session_state.show_feedback = False
-        st.session_state.round_correct = 0
-
-        threading.Thread(target=prefetch_next, daemon=True).start()
-        st.rerun()
-
-        # 🛟 Fallback — load immediately if prefetch not ready
+    if score >= int(total * 0.75):
+        st.success("Great job — moving you forward 🚀")
     else:
-        st.info("Loading next topic...")
+        st.info("Good practice — let’s keep improving 💪")
 
+    st.write("")
+
+    if st.button("Next Topic ▶"):
+
+        # reset round
+        st.session_state.round_correct = 0
+        st.session_state.show_feedback = False
+        st.session_state.index = 0
+
+        # use prefetched if ready
+        if st.session_state.next_quiz:
+
+            st.session_state.quiz = st.session_state.next_quiz
+            st.session_state.meta = st.session_state.next_meta
+
+            st.session_state.next_quiz = []
+            st.session_state.next_meta = {}
+
+            threading.Thread(target=prefetch_next, daemon=True).start()
+            st.rerun()
+
+        # fallback load
         data, err = post(
             f"{BACKEND}/next-topic",
             {"user_id": st.session_state.user_id}
         )
 
         if err or not data:
-            st.error("Failed to load next topic — try again")
+            st.error("Couldn't load next topic — try again")
             st.stop()
 
         quiz_data, err = post(
@@ -435,15 +438,13 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
         )
 
         if err or not quiz_data:
-            st.error("Question generation took too long — retrying helps")
+            st.error("Generation failed — retry")
             st.stop()
 
         st.session_state.quiz = quiz_data["questions"]
         st.session_state.meta = data
-        st.session_state.index = 0
-        st.session_state.show_feedback = False
-        st.session_state.round_correct = 0
 
         threading.Thread(target=prefetch_next, daemon=True).start()
         st.rerun()
+
 
