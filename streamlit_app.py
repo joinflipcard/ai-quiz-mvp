@@ -6,25 +6,25 @@ import uuid
 # MUST be first Streamlit call
 st.set_page_config(
     page_title="Knowledge",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
+        layout="centered",
+            initial_sidebar_state="collapsed"
+            )
 
-# App logo
-st.markdown("<div style='text-align:center; margin-bottom: 20px;'>", unsafe_allow_html=True)
-st.image("assets/131.png", width=120)
-st.markdown("</div>", unsafe_allow_html=True)
+            # App logo
+            st.markdown("<div style='text-align:center; margin-bottom: 20px;'>", unsafe_allow_html=True)
+            st.image("assets/131.png", width=120)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-BACKEND = "https://quiz.peterrazeghi.workers.dev"
+            BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 
-st.markdown("""
-<style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
+            st.markdown("""
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """, unsafe_allow_html=True)
 
 # ------------------ LOGIN ------------------
 
@@ -268,8 +268,10 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 st.warning("Please choose an answer first")
                 st.stop()
 
-            letter = selected.split(".")[0]
-            correct = (letter == q["correct"])
+            letter = selected.split(".")[0].strip().upper()
+            correct_key = q["correct"].strip().upper()
+
+            correct = (letter == correct_key)
 
             requests.post(
                 f"{BACKEND}/submit-answer",
@@ -294,8 +296,20 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         if st.session_state.last_correct:
             st.success("Correct! 🎉")
         else:
-            correct_letter = q["correct"]
-            correct_text = q["choices"][correct_letter]
+            correct_letter = q["correct"].strip().upper()
+
+            # Safe lookup (handles AI formatting issues)
+            if correct_letter in q["choices"]:
+                correct_text = q["choices"][correct_letter]
+            else:
+                # fallback if AI returned full text instead of letter
+                correct_text = "Unknown"
+                for k, v in q["choices"].items():
+                    if v.strip().lower() == correct_letter.lower():
+                        correct_letter = k
+                        correct_text = v
+                        break
+
             st.error(f"Correct answer: {correct_letter}. {correct_text}")
 
         st.info(st.session_state.last_explanation)
