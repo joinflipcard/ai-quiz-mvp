@@ -188,13 +188,31 @@ st.divider()
 
 # ------------------ START QUIZ FROM MENU ------------------
 
-def start_quiz(topic, difficulty="medium", num_questions=4):
+st.markdown("### Difficulty")
+
+difficulty = st.radio(
+    "Choose difficulty:",
+    ["Easy", "Medium", "Hard"],
+    horizontal=True,
+    index=1
+)
+
+difficulty_map = {
+    "Easy": "easy",
+    "Medium": "medium",
+    "Hard": "hard"
+}
+
+selected_difficulty = difficulty_map[difficulty]
+
+
+def start_quiz(topic, num_questions=4):
     with st.spinner("Generating questions..."):
         quiz_data, err = post(
             f"{BACKEND}/generate-quiz",
             {
                 "topic": topic,
-                "start_difficulty": difficulty,
+                "start_difficulty": selected_difficulty,
                 "num_questions": num_questions
             }
         )
@@ -206,6 +224,7 @@ def start_quiz(topic, difficulty="medium", num_questions=4):
     st.session_state.quiz = quiz_data["questions"]
     st.session_state.index = 0
     st.session_state.show_feedback = False
+    st.session_state.round_correct = 0
 
     # Non-mastery modes don’t affect topic mastery
     st.session_state.meta = {
@@ -214,7 +233,7 @@ def start_quiz(topic, difficulty="medium", num_questions=4):
     }
 
 
-# -------- General Knowledge (adaptive mastery) --------
+# -------- General Knowledge (adaptive mastery mode) --------
 
 if st.session_state.get("selected_mode") == "🎯 General Knowledge":
 
@@ -233,7 +252,8 @@ if st.session_state.get("selected_mode") == "🎯 General Knowledge":
                 f"{BACKEND}/generate-quiz",
                 {
                     "topic": data["topic"],
-                    "start_difficulty": data["start_difficulty"]
+                    "start_difficulty": data["start_difficulty"],
+                    "num_questions": 3   # mastery mode stays 3
                 }
             )
 
@@ -243,11 +263,12 @@ if st.session_state.get("selected_mode") == "🎯 General Knowledge":
             st.session_state.quiz = quiz_data["questions"]
             st.session_state.index = 0
             st.session_state.show_feedback = False
+            st.session_state.round_correct = 0
 
             threading.Thread(target=prefetch_next, daemon=True).start()
 
 
-# -------- Field Buttons (always 4 smart questions) --------
+# -------- Field Buttons (trivia style — always 4 questions) --------
 
 field_map = {
     "🧪 Science": "Science",
@@ -264,7 +285,7 @@ if selected in field_map:
     start_quiz(field_map[selected], num_questions=4)
 
 
-# -------- Pick Your Topic --------
+# -------- Pick Your Topic (4 questions, adaptive difficulty) --------
 
 if st.session_state.get("selected_mode") == "custom":
     start_quiz(st.session_state.custom_topic, num_questions=4)
@@ -312,12 +333,13 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
     q = st.session_state.quiz[st.session_state.index]
 
     st.markdown(
-        f"<div class='quiz-card'><div class='quiz-question'>{q['question']}</div></div>",
+        f"<div class='quiz-card'><div class='quiz-question'>{q.get('question','')}</div></div>",
         unsafe_allow_html=True
     )
 
     if not st.session_state.show_feedback:
 
+        # safety check
         if not isinstance(q.get("choices"), dict):
             st.session_state.index += 1
             st.rerun()
@@ -338,26 +360,36 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 st.stop()
 
             letter = selected.split(".")[0].strip().upper()
-            correct_key = str(q.get("correct", "")).strip().upper()
+
+            correct_raw = q.get("correct")
+
+            # skip broken AI output safely
+            if not isinstance(correct_raw, str):
+                st.session_state.index += 1
+                st.session_state.show_feedback = False
+                st.rerun()
+
+            correct_key = correct_raw.strip().upper()
 
             correct = (letter == correct_key)
 
+            # backend submit (safe even for practice)
             requests.post(
                 f"{BACKEND}/submit-answer",
                 json={
                     "user_id": st.session_state.user_id,
-                    "field_id": st.session_state.meta["field_id"],
-                    "topic_id": st.session_state.meta["topic_id"],
+                    "field_id": st.session_state.meta.get("field_id"),
+                    "topic_id": st.session_state.meta.get("topic_id"),
                     "correct": correct
                 },
                 timeout=5
             )
 
+            # progress tracking
             st.session_state.total_answered += 1
             if correct:
                 st.session_state.total_correct += 1
                 st.session_state.round_correct += 1
-
 
             st.session_state.last_correct = correct
             st.session_state.last_explanation = q.get("explanation", "")
@@ -365,14 +397,21 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             st.rerun()
 
     else:
+
         if st.session_state.last_correct:
             st.markdown(
                 "<div class='feedback-good'>✅ Correct!</div>",
                 unsafe_allow_html=True
             )
         else:
-            correct_letter = q.get("correct", "?")
-            correct_text = q["choices"].get(correct_letter, "Unknown")
+            correct_raw = q.get("correct")
+
+            if isinstance(correct_raw, str):
+                correct_letter = correct_raw.strip().upper()
+                correct_text = q["choices"].get(correct_letter, "Unknown")
+            else:
+                correct_letter = "?"
+                correct_text = "Unavailable"
 
             st.markdown(
                 f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
