@@ -58,23 +58,37 @@ if "user_id" not in st.session_state:
 
 # ------------------ PROGRESS ------------------
 
-# Get total correct + attempts (simple accuracy)
-stats = requests.get(
-    f"{BACKEND}/user-accuracy",
-    params={"user_id": st.session_state.user_id},
-    timeout=10
-).json()
+try:
+    r = requests.get(
+        f"{BACKEND}/mastered-count",
+        params={"user_id": st.session_state.user_id},
+        timeout=10
+    )
 
-correct = stats.get("correct", 0)
-attempts = stats.get("attempts", 0)
+    if r.status_code == 200:
+        data = r.json()
+        mastered_count = data.get("count", 0)
+    else:
+        mastered_count = 0
 
-accuracy = correct / attempts if attempts else 0
+except Exception:
+    mastered_count = 0
 
-percent = round(accuracy * 100)
 
-st.markdown(f"### Accuracy: {percent}%")
+# (temporary total until we convert to % correct later)
+if "total_topics" not in st.session_state:
+    try:
+        r2 = requests.get(f"{BACKEND}/all-topics", timeout=10)
+        st.session_state.total_topics = len(r2.json())
+    except Exception:
+        st.session_state.total_topics = 1
 
-st.progress(accuracy)
+total_topics = st.session_state.total_topics
+
+
+st.markdown(f"### Progress: {mastered_count} / {total_topics} topics mastered")
+
+st.progress(mastered_count / total_topics if total_topics else 0)
 
 # ------------------ STATE ------------------
 
