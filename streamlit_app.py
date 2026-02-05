@@ -58,26 +58,23 @@ if "user_id" not in st.session_state:
 
 # ------------------ PROGRESS ------------------
 
-# Get mastered topics count from backend (persistent per user)
-count_res = requests.get(
-    f"{BACKEND}/mastered-count",
+# Get total correct + attempts (simple accuracy)
+stats = requests.get(
+    f"{BACKEND}/user-accuracy",
     params={"user_id": st.session_state.user_id},
     timeout=10
 ).json()
 
-mastered_count = count_res["count"]
+correct = stats.get("correct", 0)
+attempts = stats.get("attempts", 0)
 
-# Get total topics once per session
-if "total_topics" not in st.session_state:
-    r = requests.get(f"{BACKEND}/all-topics")
-    st.session_state.total_topics = len(r.json())
+accuracy = correct / attempts if attempts else 0
 
-total_topics = st.session_state.total_topics
+percent = round(accuracy * 100)
 
-st.markdown(f"### Progress: {mastered_count} / {total_topics} topics mastered")
+st.markdown(f"### Accuracy: {percent}%")
 
-# Grey bar fills blue as mastery grows
-st.progress(mastered_count / total_topics if total_topics else 0)
+st.progress(accuracy)
 
 # ------------------ STATE ------------------
 
@@ -150,35 +147,82 @@ def prefetch_next():
     st.session_state.next_meta = data
     st.session_state.next_quiz = quiz_data["questions"]
 
-# ------------------ DIFFICULTY SELECT ------------------
+# ------------------ QUIZ MENU ------------------
 
-difficulty = st.radio(
-    "Difficulty:",
-    ["Easy", "Medium", "Hard"],
-    index=1   # default = Medium
-)
+st.subheader("Choose a topic")
 
-difficulty_map = {
-    "Easy": "easy",
-    "Medium": "medium",
-    "Hard": "hard"
-}
+menu_items = [
+    "🎯 General Knowledge",
+    "🧪 Science",
+    "🏀 Sports",
+    "🎬 Entertainment",
+    "📜 History",
+    "🌍 Geography",
+    "📰 Recent News"
+]
 
-selected_difficulty = difficulty_map[difficulty]
+if "selected_mode" not in st.session_state:
+    st.session_state.selected_mode = None
 
-# ------------------ START QUIZ ------------------
+cols = st.columns(2)
 
-if st.button("Start Quiz"):
+for i, label in enumerate(menu_items):
+    with cols[i % 2]:
+        if st.button(label, use_container_width=True):
+            st.session_state.selected_mode = label
+
+# ------------------ PICK YOUR TOPIC ------------------
+
+st.markdown("---")
+st.markdown("### Pick your own topic")
+
+custom_topic = st.text_input("Enter any topic you want to learn:")
+
+if st.button("Start custom topic") and custom_topic.strip():
+    st.session_state.selected_mode = "custom"
+    st.session_state.custom_topic = custom_topic.strip()
+
+st.divider()
+
+# ------------------ START QUIZ FROM MENU ------------------
+
+def start_quiz(topic, difficulty="medium", num_questions=4):
+    with st.spinner("Generating questions..."):
+        quiz_data, err = post(
+            f"{BACKEND}/generate-quiz",
+            {
+                "topic": topic,
+                "start_difficulty": difficulty,
+                "num_questions": num_questions
+            }
+        )
+
+    if err:
+        st.error(err)
+        return
+
+    st.session_state.quiz = quiz_data["questions"]
+    st.session_state.index = 0
+    st.session_state.show_feedback = False
+
+    # Non-mastery modes don’t affect topic mastery
+    st.session_state.meta = {
+        "field_id": None,
+        "topic_id": None
+    }
+
+
+# -------- General Knowledge (adaptive mastery) --------
+
+if st.session_state.get("selected_mode") == "🎯 General Knowledge":
 
     data, err = post(
         f"{BACKEND}/next-topic",
-        {
-            "user_id": st.session_state.user_id,
-        }
+        {"user_id": st.session_state.user_id}
     )
 
     if err:
-        st.session_state.error = err
+        st.error(err)
     else:
         st.session_state.meta = data
 
@@ -187,79 +231,41 @@ if st.button("Start Quiz"):
                 f"{BACKEND}/generate-quiz",
                 {
                     "topic": data["topic"],
-                    "start_difficulty": selected_difficulty
+                    "start_difficulty": data["start_difficulty"]
                 }
             )
 
         if err:
-            st.session_state.error = err
+            st.error(err)
         else:
             st.session_state.quiz = quiz_data["questions"]
             st.session_state.index = 0
             st.session_state.show_feedback = False
-            st.session_state.error = None
 
             threading.Thread(target=prefetch_next, daemon=True).start()
 
 
-st.divider()
+# -------- Field Buttons (always 4 smart questions) --------
 
-# ------------------ PRACTICE ANY TOPIC ------------------
+field_map = {
+    "🧪 Science": "Science",
+    "🏀 Sports": "Sports",
+    "🎬 Entertainment": "Entertainment",
+    "📜 History": "History",
+    "🌍 Geography": "Geography",
+    "📰 Recent News": "Recent News"
+}
 
-st.subheader("Practice any topic")
+selected = st.session_state.get("selected_mode")
 
-custom_topic = st.text_input("Enter a topic you want to practice:")
-
-# init practice state
-if "practice_mode" not in st.session_state:
-    st.session_state.practice_mode = False
-
-if "practice_difficulty" not in st.session_state:
-    st.session_state.practice_difficulty = "medium"
-
-if "practice_streak" not in st.session_state:
-    st.session_state.practice_streak = 0
+if selected in field_map:
+    start_quiz(field_map[selected], num_questions=4)
 
 
-def bump_difficulty(up=True):
-    levels = ["easy", "medium", "hard", "advanced", "challenge"]
-    i = levels.index(st.session_state.practice_difficulty)
+# -------- Pick Your Topic --------
 
-    if up and i < len(levels) - 1:
-        st.session_state.practice_difficulty = levels[i + 1]
-    elif not up and i > 0:
-        st.session_state.practice_difficulty = levels[i - 1]
-
-
-if st.button("Practice topic") and custom_topic.strip():
-
-    st.session_state.practice_mode = True
-    st.session_state.practice_topic = custom_topic.strip()
-    st.session_state.practice_difficulty = "medium"
-    st.session_state.practice_streak = 0
-
-    with st.spinner("Generating question..."):
-        quiz_data, err = post(
-            f"{BACKEND}/generate-quiz",
-            {
-                "topic": st.session_state.practice_topic,
-                "start_difficulty": st.session_state.practice_difficulty,
-                "num_questions": 5
-            }
-        )
-
-    if err:
-        st.error(err)
-    else:
-        st.session_state.quiz = quiz_data["questions"]
-        st.session_state.index = 0
-        st.session_state.show_feedback = False
-
-        # practice mode doesn't affect mastery
-        st.session_state.meta = {
-            "field_id": None,
-            "topic_id": None
-        }
+if st.session_state.get("selected_mode") == "custom":
+    start_quiz(st.session_state.custom_topic, num_questions=4)
 
 # ------------------ ERROR ------------------
 
@@ -268,11 +274,32 @@ if st.session_state.error:
 
 # ------------------ QUIZ ------------------
 
-# Force blue radio buttons
 st.markdown("""
 <style>
-div[role="radiogroup"] input[type="radio"] {
-    accent-color: #1f77ff;
+.quiz-card {
+    background: #f9fafc;
+    padding: 22px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.06);
+    margin-bottom: 20px;
+}
+
+.quiz-question {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.feedback-good {
+    background:#e8fff2;
+    padding:14px;
+    border-radius:12px;
+}
+
+.feedback-bad {
+    background:#ffecec;
+    padding:14px;
+    border-radius:12px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -282,44 +309,34 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     q = st.session_state.quiz[st.session_state.index]
 
-    st.markdown(f"### {q['question']}")
-    st.write("")
+    st.markdown(
+        f"<div class='quiz-card'><div class='quiz-question'>{q['question']}</div></div>",
+        unsafe_allow_html=True
+    )
 
     if not st.session_state.show_feedback:
 
-        # Build answer options safely
         if not isinstance(q.get("choices"), dict):
-            st.warning("Bad question format — skipping...")
             st.session_state.index += 1
             st.rerun()
 
         options = [f"{k}. {v}" for k, v in q["choices"].items()]
 
         selected = st.radio(
-            "Choose an answer:",
+            "Choose one:",
             options,
             index=None,
             key=f"radio-{st.session_state.index}"
         )
 
-        if st.button("Submit answer"):
+        if st.button("Submit"):
 
             if selected is None:
-                st.warning("Please choose an answer first")
+                st.warning("Pick an answer first")
                 st.stop()
 
             letter = selected.split(".")[0].strip().upper()
-
-            correct_raw = q.get("correct")
-
-            # Skip broken AI output safely
-            if not isinstance(correct_raw, str):
-                st.warning("Incomplete question — skipping...")
-                st.session_state.index += 1
-                st.session_state.show_feedback = False
-                st.rerun()
-
-            correct_key = correct_raw.strip().upper()
+            correct_key = str(q.get("correct", "")).strip().upper()
 
             correct = (letter == correct_key)
 
@@ -344,30 +361,22 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     else:
         if st.session_state.last_correct:
-            st.success("Correct! 🎉")
+            st.markdown(
+                "<div class='feedback-good'>✅ Correct!</div>",
+                unsafe_allow_html=True
+            )
         else:
-            correct_raw = q.get("correct")
+            correct_letter = q.get("correct", "?")
+            correct_text = q["choices"].get(correct_letter, "Unknown")
 
-            if isinstance(correct_raw, str):
-                correct_letter = correct_raw.strip().upper()
-
-                if correct_letter in q["choices"]:
-                    correct_text = q["choices"][correct_letter]
-                else:
-                    correct_text = "Unknown"
-                    for k, v in q["choices"].items():
-                        if v.strip().lower() == correct_letter.lower():
-                            correct_letter = k
-                            correct_text = v
-                            break
-
-                st.error(f"Correct answer: {correct_letter}. {correct_text}")
-            else:
-                st.error("Correct answer unavailable (question truncated)")
+            st.markdown(
+                f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
+                unsafe_allow_html=True
+            )
 
         st.info(st.session_state.last_explanation)
 
-        if st.button("Next Question"):
+        if st.button("Next"):
             st.session_state.show_feedback = False
             st.session_state.index += 1
             st.rerun()
