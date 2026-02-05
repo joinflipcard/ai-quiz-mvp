@@ -244,7 +244,7 @@ if st.button("Practice topic") and custom_topic.strip():
             {
                 "topic": st.session_state.practice_topic,
                 "start_difficulty": st.session_state.practice_difficulty,
-                "num_questions": 1
+                "num_questions": 5
             }
         )
 
