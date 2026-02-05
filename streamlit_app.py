@@ -253,6 +253,12 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
     if not st.session_state.show_feedback:
 
+        # Build answer options safely
+        if not isinstance(q.get("choices"), dict):
+            st.warning("Bad question format — skipping...")
+            st.session_state.index += 1
+            st.rerun()
+
         options = [f"{k}. {v}" for k, v in q["choices"].items()]
 
         selected = st.radio(
@@ -269,7 +275,17 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 st.stop()
 
             letter = selected.split(".")[0].strip().upper()
-            correct_key = q["correct"].strip().upper()
+
+            correct_raw = q.get("correct")
+
+            # Skip broken AI output safely
+            if not isinstance(correct_raw, str):
+                st.warning("Incomplete question — skipping...")
+                st.session_state.index += 1
+                st.session_state.show_feedback = False
+                st.rerun()
+
+            correct_key = correct_raw.strip().upper()
 
             correct = (letter == correct_key)
 
@@ -288,7 +304,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 st.session_state.round_correct += 1
 
             st.session_state.last_correct = correct
-            st.session_state.last_explanation = q["explanation"]
+            st.session_state.last_explanation = q.get("explanation", "")
             st.session_state.show_feedback = True
             st.rerun()
 
@@ -296,21 +312,24 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         if st.session_state.last_correct:
             st.success("Correct! 🎉")
         else:
-            correct_letter = q["correct"].strip().upper()
+            correct_raw = q.get("correct")
 
-            # Safe lookup (handles AI formatting issues)
-            if correct_letter in q["choices"]:
-                correct_text = q["choices"][correct_letter]
+            if isinstance(correct_raw, str):
+                correct_letter = correct_raw.strip().upper()
+
+                if correct_letter in q["choices"]:
+                    correct_text = q["choices"][correct_letter]
+                else:
+                    correct_text = "Unknown"
+                    for k, v in q["choices"].items():
+                        if v.strip().lower() == correct_letter.lower():
+                            correct_letter = k
+                            correct_text = v
+                            break
+
+                st.error(f"Correct answer: {correct_letter}. {correct_text}")
             else:
-                # fallback if AI returned full text instead of letter
-                correct_text = "Unknown"
-                for k, v in q["choices"].items():
-                    if v.strip().lower() == correct_letter.lower():
-                        correct_letter = k
-                        correct_text = v
-                        break
-
-            st.error(f"Correct answer: {correct_letter}. {correct_text}")
+                st.error("Correct answer unavailable (question truncated)")
 
         st.info(st.session_state.last_explanation)
 
