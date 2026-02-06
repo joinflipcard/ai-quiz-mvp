@@ -124,29 +124,19 @@ def post(url, payload, retries=2):
 
     return None, err
 
-def prefetch_next():
-    data, err = post(
-        f"{BACKEND}/next-topic",
-        {
-            "user_id": st.session_state.user_id,
-        }
-    )
-
-    if err or not data:
-        return
-
+def prefetch_next(topic, num_questions):
     quiz_data, err = post(
         f"{BACKEND}/generate-quiz",
         {
-            "topic": data["topic"],
-            "start_difficulty": data["start_difficulty"]
+            "topic": topic,
+            "start_difficulty": selected_difficulty,
+            "num_questions": num_questions
         }
     )
 
     if err or not quiz_data:
         return
 
-    st.session_state.next_meta = data
     st.session_state.next_quiz = quiz_data["questions"]
 
 # ------------------ QUIZ MENU ------------------
@@ -256,6 +246,13 @@ def start_quiz(topic, num_questions=4):
         "field_id": None,
         "topic_id": None
     }
+
+    # ⚡ PREFETCH NEXT ROUND IN BACKGROUND
+    threading.Thread(
+        target=prefetch_next,
+        args=(topic, num_questions),
+        daemon=True
+    ).start()
 
 
 # -------- General Knowledge (adaptive mastery) --------
@@ -452,10 +449,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
     score = st.session_state.round_correct
     total = len(st.session_state.quiz)
 
-    if total == 0:
-        percent = 0
-    else:
-        percent = int((score / total) * 100)
+    percent = int((score / total) * 100) if total else 0
 
     st.markdown("### Round complete 🎯")
     st.progress(percent / 100)
@@ -477,7 +471,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         selected = st.session_state.get("selected_mode")
 
-        # --- General Knowledge keeps adaptive flow ---
+        # -------- Adaptive General Knowledge --------
         if selected == "🎯 General Knowledge":
 
             data, err = post(
@@ -491,25 +485,36 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
             st.session_state.meta = data
 
-            quiz_data, err = post(
-                f"{BACKEND}/generate-quiz",
-                {
-                    "topic": data["topic"],
-                    "start_difficulty": data["start_difficulty"],
-                    "num_questions": 3
-                }
-            )
+            # 👉 use prefetched if available
+            if st.session_state.next_quiz:
+                st.session_state.quiz = st.session_state.next_quiz
+                st.session_state.next_quiz = []
+            else:
+                quiz_data, err = post(
+                    f"{BACKEND}/generate-quiz",
+                    {
+                        "topic": data["topic"],
+                        "start_difficulty": data["start_difficulty"],
+                        "num_questions": 3
+                    }
+                )
 
-            if err:
-                st.error("Generation failed — retry")
-                st.stop()
+                if err:
+                    st.error("Generation failed — retry")
+                    st.stop()
 
-            st.session_state.quiz = quiz_data["questions"]
+                st.session_state.quiz = quiz_data["questions"]
 
-            threading.Thread(target=prefetch_next, daemon=True).start()
+            # ⚡ prefetch again
+            threading.Thread(
+                target=prefetch_next,
+                args=(data["topic"], 3),
+                daemon=True
+            ).start()
+
             st.rerun()
 
-        # --- All other modes: repeat same category ---
+        # -------- All other modes --------
         else:
 
             field_map = {
@@ -530,21 +535,31 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
                 st.session_state.quiz = []
                 st.rerun()
 
-            quiz_data, err = post(
-                f"{BACKEND}/generate-quiz",
-                {
-                    "topic": topic,
-                    "start_difficulty": selected_difficulty,
-                    "num_questions": 4
-                }
-            )
+            # 👉 use prefetched if available
+            if st.session_state.next_quiz:
+                st.session_state.quiz = st.session_state.next_quiz
+                st.session_state.next_quiz = []
+            else:
+                quiz_data, err = post(
+                    f"{BACKEND}/generate-quiz",
+                    {
+                        "topic": topic,
+                        "start_difficulty": selected_difficulty,
+                        "num_questions": 4
+                    }
+                )
 
-            if err:
-                st.error("Generation failed — retry")
-                st.stop()
+                if err:
+                    st.error("Generation failed — retry")
+                    st.stop()
 
-            st.session_state.quiz = quiz_data["questions"]
+                st.session_state.quiz = quiz_data["questions"]
+
+            # ⚡ prefetch again
+            threading.Thread(
+                target=prefetch_next,
+                args=(topic, 4),
+                daemon=True
+            ).start()
+
             st.rerun()
-
-
-
