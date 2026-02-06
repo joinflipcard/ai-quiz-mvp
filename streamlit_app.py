@@ -414,16 +414,16 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             correct = (letter == correct_key)
 
             requests.post(
-                f"{BACKEND}/submit-answer",
-                json={
-                    "user_id": st.session_state.user_id,
-                    "field_id": st.session_state.meta.get("field_id"),
-                    "topic_id": st.session_state.meta.get("topic_id"),
-                    "correct": correct,
-                    "question_text": q.get("question")
-                },
-                timeout=5
-            )
+    f"{BACKEND}/submit-answer",
+    json={
+        "user_id": st.session_state.user_id,
+        "field_id": st.session_state.meta.get("field_id"),
+        "topic_id": st.session_state.meta.get("topic_id"),
+        "correct": correct,
+        "question_text": q.get("question")
+    },
+    timeout=5
+)
 
             st.session_state.total_answered += 1
             if correct:
