@@ -247,7 +247,7 @@ def start_quiz(topic, num_questions=4):
         "topic_id": None
     }
 
-    # ⚡ PREFETCH NEXT ROUND IN BACKGROUND
+    # ⚡ prefetch next round in background
     threading.Thread(
         target=prefetch_next,
         args=(topic, num_questions),
@@ -255,9 +255,32 @@ def start_quiz(topic, num_questions=4):
     ).start()
 
 
+# ------------------ AUTO START BASED ON MENU ------------------
+
+selected = st.session_state.get("selected_mode")
+
+field_map = {
+    "🧪 Science": "Science trivia",
+    "🏀 Sports": "sports trivia",
+    "🎬 Entertainment": "movie and celebrity trivia",
+    "📜 History": "history trivia",
+    "🌍 Geography": "world geography trivia",
+    "📰 Recent News": "current events trivia"
+}
+
+# ✅ only start once (prevents reload on every rerun)
+if selected in field_map and not st.session_state.quiz:
+    start_quiz(field_map[selected], num_questions=4)
+
+# ✅ only start once for custom topic
+if selected == "custom" and not st.session_state.quiz:
+    start_quiz(st.session_state.custom_topic, num_questions=4)
+
+
+
 # -------- General Knowledge (adaptive mastery) --------
 
-if st.session_state.get("selected_mode") == "🎯 General Knowledge":
+if st.session_state.get("selected_mode") == "🎯 General Knowledge" and not st.session_state.quiz:
 
     data, err = post(
         f"{BACKEND}/next-topic",
@@ -287,30 +310,11 @@ if st.session_state.get("selected_mode") == "🎯 General Knowledge":
             st.session_state.show_feedback = False
             st.session_state.round_correct = 0
 
-            threading.Thread(target=prefetch_next, daemon=True).start()
-
-
-# -------- Trivia Categories (always 4 random questions) --------
-
-field_map = {
-    "🧪 Science": "Science trivia",
-    "🏀 Sports": "sports trivia",
-    "🎬 Entertainment": "movie and celebrity trivia",
-    "📜 History": "history trivia",
-    "🌍 Geography": "world geography trivia",
-    "📰 Recent News": "current events trivia"
-}
-
-selected = st.session_state.get("selected_mode")
-
-if selected in field_map:
-    start_quiz(field_map[selected], num_questions=4)
-
-
-# -------- Pick Your Topic --------
-
-if st.session_state.get("selected_mode") == "custom":
-    start_quiz(st.session_state.custom_topic, num_questions=4)
+            threading.Thread(
+                target=prefetch_next,
+                args=(data["topic"], 3),
+                daemon=True
+            ).start()
 
 # ------------------ ERROR ------------------
 
