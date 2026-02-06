@@ -11,18 +11,27 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# App logo
-st.markdown("<div style='text-align:center; margin-bottom: 20px;'>", unsafe_allow_html=True)
-st.image("assets/131.png", width=120)
-st.markdown("</div>", unsafe_allow_html=True)
-
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 st.markdown("""
 <style>
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-header {visibility: hidden;}
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+h2, h3 {
+    margin-top: 0.6rem;
+    margin-bottom: 0.4rem;
+}
+
+.stRadio > div {
+    gap: 6px;
+}
+
+.stButton button {
+    margin-top: 4px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -222,7 +231,7 @@ selected_difficulty = difficulty_map[difficulty]
 
 
 def start_quiz(topic, num_questions=4):
-    with st.spinner("Generating questions..."):
+    with st.spinner("🧠 Creating your quiz..."):
         quiz_data, err = post(
             f"{BACKEND}/generate-quiz",
             {
@@ -268,14 +277,15 @@ field_map = {
     "📰 Recent News": "current events trivia"
 }
 
-# ✅ only start once (prevents reload on every rerun)
 if selected in field_map and not st.session_state.quiz:
-    start_quiz(field_map[selected], num_questions=4)
+    with st.spinner("🧠 Creating your quiz..."):
+        start_quiz(field_map[selected], num_questions=4)
+    st.rerun()
 
-# ✅ only start once for custom topic
 if selected == "custom" and not st.session_state.quiz:
-    start_quiz(st.session_state.custom_topic, num_questions=4)
-
+    with st.spinner("🧠 Creating your quiz..."):
+        start_quiz(st.session_state.custom_topic, num_questions=4)
+    st.rerun()
 
 
 # -------- General Knowledge (adaptive mastery) --------
@@ -292,7 +302,7 @@ if st.session_state.get("selected_mode") == "🎯 General Knowledge" and not st.
     else:
         st.session_state.meta = data
 
-        with st.spinner("Generating questions..."):
+        with st.spinner("🧠 Creating your quiz..."):
             quiz_data, err = post(
                 f"{BACKEND}/generate-quiz",
                 {
