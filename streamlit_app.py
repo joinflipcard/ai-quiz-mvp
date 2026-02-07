@@ -143,7 +143,7 @@ def prefetch_next(topic, num_questions, difficulty):
             "topic": topic,
             "start_difficulty": difficulty,
             "num_questions": num_questions,
-            "user_id": st.session_state.user_id
+            "user_id": st.session_state.user_id   # ← added here
         }
     )
     if err or not quiz_data or "questions" not in quiz_data:
@@ -205,7 +205,7 @@ def start_quiz(topic, num_questions=4, is_adaptive=False):
             "topic": topic,
             "start_difficulty": selected_difficulty,
             "num_questions": num_questions,
-            "user_id": st.session_state.user_id
+            "user_id": st.session_state.user_id   # ← added here
         }
         if is_adaptive:
             payload.pop("start_difficulty", None)
