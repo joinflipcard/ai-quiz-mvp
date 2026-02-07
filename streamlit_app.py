@@ -29,6 +29,28 @@ h2, h3 {
 .stButton button {
     margin-top: 4px;
 }
+.category-btn button {
+    height: 70px;
+    font-size: 1.05rem;
+    border-radius: 14px;
+    font-weight: 600;
+}
+.quiz-card {
+    background: #ffffff;
+    padding: 26px;
+    border-radius: 18px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.08);
+    margin-bottom: 18px;
+}
+.quiz-question {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 18px;
+    line-height: 1.4;
+}
+.feedback-good  { background:#e9fff3; padding:16px; border-radius:14px; font-weight:600; }
+.feedback-bad   { background:#ffecec; padding:16px; border-radius:14px; font-weight:600; }
+.stButton button { border-radius: 12px; height: 48px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -89,6 +111,7 @@ defaults = {
     "next_quiz": [],
     "next_meta": {},
     "round_correct": 0,
+    "selected_mode": None,
 }
 
 for key, value in defaults.items():
@@ -131,17 +154,6 @@ def prefetch_next(topic, num_questions, difficulty):
 # ── CATEGORY MENU ───────────────────────────────────────────────
 st.markdown("## Choose a category")
 
-st.markdown("""
-<style>
-.category-btn button {
-    height: 70px;
-    font-size: 1.05rem;
-    border-radius: 14px;
-    font-weight: 600;
-}
-</style>
-""", unsafe_allow_html=True)
-
 menu_items = [
     "🎯 General Knowledge",
     "🧪 Science",
@@ -151,9 +163,6 @@ menu_items = [
     "🌍 Geography",
     "📰 Recent News"
 ]
-
-if "selected_mode" not in st.session_state:
-    st.session_state.selected_mode = None
 
 cols = [st.columns(2) for _ in range(3)] + [st.columns(1)]
 i = 0
@@ -199,7 +208,6 @@ def start_quiz(topic, num_questions=4, is_adaptive=False):
             "user_id": st.session_state.user_id
         }
         if is_adaptive:
-            # For adaptive mode we already have difficulty from /next-topic
             payload.pop("start_difficulty", None)
 
         quiz_data, err = post(f"{BACKEND}/generate-quiz", payload)
@@ -217,7 +225,6 @@ def start_quiz(topic, num_questions=4, is_adaptive=False):
     st.session_state.show_feedback = False
     st.session_state.round_correct = 0
 
-    # Non-adaptive modes don't use mastery
     if not is_adaptive:
         st.session_state.meta = {"field_id": None, "topic_id": None}
 
@@ -265,8 +272,6 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
         st.error("Could not load next topic")
     else:
         st.session_state.meta = data
-
-        # Use difficulty coming from backend
         if start_quiz(data["topic"], num_questions=3, is_adaptive=True):
             threading.Thread(
                 target=prefetch_next,
@@ -277,28 +282,6 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
 
 
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
-st.markdown("""
-<style>
-.quiz-card {
-    background: #ffffff;
-    padding: 26px;
-    border-radius: 18px;
-    box-shadow: 0 6px 16px rgba(0,0,0,.08);
-    margin-bottom: 18px;
-}
-.quiz-question {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin-bottom: 18px;
-    line-height: 1.4;
-}
-.feedback-good  { background:#e9fff3; padding:16px; border-radius:14px; font-weight:600; }
-.feedback-bad   { background:#ffecec; padding:16px; border-radius:14px; font-weight:600; }
-.stButton button { border-radius: 12px; height: 48px; }
-</style>
-""", unsafe_allow_html=True)
-
-
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
     q = st.session_state.quiz[st.session_state.index]
 
@@ -332,7 +315,6 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
             is_correct = (letter == correct_letter)
 
-            # Submit to backend — use question_id instead of text
             requests.post(
                 f"{BACKEND}/submit-answer",
                 json={
@@ -424,27 +406,25 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         else:
             # Non-adaptive modes
-topic = (
-    st.session_state.custom_topic
-    if selected == "custom"
-    else field_map.get(selected)
-)
+            topic = (
+                st.session_state.custom_topic
+                if selected == "custom"
+                else field_map.get(selected)
+            )
 
-if not topic:
-    st.session_state.quiz = []
-    st.rerun()
-    # removed invalid 'return' — st.rerun() already restarts the script
-    # no need to stop further execution here
+            if not topic:
+                st.session_state.quiz = []
+                st.rerun()
+            else:
+                if st.session_state.next_quiz:
+                    st.session_state.quiz = st.session_state.next_quiz
+                    st.session_state.next_quiz = []
+                else:
+                    start_quiz(topic, num_questions=4)
 
-if st.session_state.next_quiz:
-    st.session_state.quiz = st.session_state.next_quiz
-    st.session_state.next_quiz = []
-else:
-    start_quiz(topic, num_questions=4)
-
-threading.Thread(
-    target=prefetch_next,
-    args=(topic, 4, selected_difficulty),
-    daemon=True
-).start()
-st.rerun()
+                threading.Thread(
+                    target=prefetch_next,
+                    args=(topic, 4, selected_difficulty),
+                    daemon=True
+                ).start()
+                st.rerun()
