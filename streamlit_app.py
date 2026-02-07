@@ -314,7 +314,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
             is_correct = (letter == correct_letter)
 
-            # Debug line — now placed AFTER is_correct is defined
+            # Debug line — shows question_id and correctness
             st.info(f"Debug: Sending question_id = {q.get('id')} | correct = {is_correct}")
 
             # Send to backend
@@ -332,7 +332,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                 )
                 st.success(f"Submit status: {response.status_code}")
                 if response.status_code != 200:
-                    st.error(f"Error: {response.text}")
+                    st.error(f"Error from backend: {response.text}")
             except Exception as e:
                 st.error(f"Request failed: {str(e)}")
 
