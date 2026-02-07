@@ -1,155 +1,134 @@
 import threading
 import streamlit as st
 import requests
-import uuid
 
 # MUST be first Streamlit call
 st.set_page_config(
     page_title="Knowledge",
-    page_icon="assets/icon.png",   # or icon.ico
+    page_icon="assets/icon.png",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
+# ── Basic styling ───────────────────────────────────────────────
 st.markdown("""
 <style>
 .block-container {
     padding-top: 1rem;
     padding-bottom: 1rem;
 }
-
 h2, h3 {
     margin-top: 0.6rem;
     margin-bottom: 0.4rem;
 }
-
 .stRadio > div {
     gap: 6px;
 }
-
 .stButton button {
     margin-top: 4px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# ------------------ LOGIN ------------------
-
+# ── LOGIN ───────────────────────────────────────────────────────
 if "user_id" not in st.session_state:
-
     st.subheader("Login")
 
     name = st.text_input("Your name").strip()
     code = st.text_input("Access code", type="password").strip()
 
     if st.button("Enter"):
-
         if not name or not code:
-            st.warning("Enter name and access code")
+            st.warning("Please enter both name and access code")
             st.stop()
 
-        r = requests.post(
-            f"{BACKEND}/login",
-            json={"name": name, "code": code},
-            timeout=10
-        )
-
-        if r.status_code != 200:
-            st.error(f"Login failed: {r.text}")
+        try:
+            r = requests.post(
+                f"{BACKEND}/login",
+                json={"name": name, "code": code},
+                timeout=10
+            )
+            r.raise_for_status()
+            st.session_state.user_id = r.json()["user_id"]
+            st.rerun()
+        except Exception as e:
+            st.error(f"Login failed: {str(e)}")
             st.stop()
-
-        st.session_state.user_id = r.json()["user_id"]
-        st.rerun()
 
     st.stop()
 
-# ------------------ PROGRESS ------------------
-
-# init accuracy tracking
+# ── GLOBAL PROGRESS ─────────────────────────────────────────────
 if "total_answered" not in st.session_state:
     st.session_state.total_answered = 0
-
 if "total_correct" not in st.session_state:
     st.session_state.total_correct = 0
 
-# calculate percent (avoid divide by zero)
-if st.session_state.total_answered == 0:
-    accuracy = 0
-else:
-    accuracy = st.session_state.total_correct / st.session_state.total_answered
-
-st.markdown(
-    f"### Accuracy: {round(accuracy * 100)}%  "
-    f"({st.session_state.total_correct} / {st.session_state.total_answered} correct)"
+accuracy = (
+    st.session_state.total_correct / st.session_state.total_answered
+    if st.session_state.total_answered > 0
+    else 0
 )
 
+st.markdown(
+    f"### Accuracy: **{round(accuracy * 100)}%** "
+    f"({st.session_state.total_correct} / {st.session_state.total_answered})"
+)
 st.progress(accuracy)
 
-# ------------------ STATE ------------------
+# ── STATE INITIALIZATION ────────────────────────────────────────
+defaults = {
+    "quiz": [],
+    "index": 0,
+    "meta": {},
+    "error": None,
+    "show_feedback": False,
+    "last_correct": False,
+    "last_explanation": "",
+    "next_quiz": [],
+    "next_meta": {},
+    "round_correct": 0,
+}
 
-if "quiz" not in st.session_state:
-    st.session_state.quiz = []
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
-if "index" not in st.session_state:
-    st.session_state.index = 0
-
-if "meta" not in st.session_state:
-    st.session_state.meta = {}
-
-if "error" not in st.session_state:
-    st.session_state.error = None
-
-if "show_feedback" not in st.session_state:
-    st.session_state.show_feedback = False
-    st.session_state.last_correct = False
-    st.session_state.last_explanation = ""
-
-if "next_quiz" not in st.session_state:
-    st.session_state.next_quiz = []
-
-if "next_meta" not in st.session_state:
-    st.session_state.next_meta = {}
-
-if "round_correct" not in st.session_state:
-    st.session_state.round_correct = 0
-
-# ------------------ HELPERS ------------------
-
-def post(url, payload, retries=2):
+# ── HELPERS ─────────────────────────────────────────────────────
+def post(url, payload, retries=2, timeout=90):
     for attempt in range(retries + 1):
         try:
-            r = requests.post(url, json=payload, timeout=90)
+            r = requests.post(url, json=payload, timeout=timeout)
             if r.status_code == 200:
                 return r.json(), None
             else:
-                err = r.text
+                return None, r.text
         except requests.exceptions.ReadTimeout:
-            err = "Backend took too long — retrying..."
+            if attempt == retries:
+                return None, "Backend timeout after retries"
+        except Exception as e:
+            if attempt == retries:
+                return None, str(e)
+    return None, "Request failed after retries"
 
-        if attempt < retries:
-            continue
 
-    return None, err
-
-def prefetch_next(topic, num_questions):
+def prefetch_next(topic, num_questions, difficulty):
     quiz_data, err = post(
         f"{BACKEND}/generate-quiz",
         {
             "topic": topic,
-            "start_difficulty": selected_difficulty,
-            "num_questions": num_questions
+            "start_difficulty": difficulty,
+            "num_questions": num_questions,
+            "user_id": st.session_state.user_id
         }
     )
-
-    if err or not quiz_data:
+    if err or not quiz_data or "questions" not in quiz_data:
         return
-
     st.session_state.next_quiz = quiz_data["questions"]
 
-# ------------------ QUIZ MENU ------------------
 
+# ── CATEGORY MENU ───────────────────────────────────────────────
 st.markdown("## Choose a category")
 
 st.markdown("""
@@ -176,44 +155,30 @@ menu_items = [
 if "selected_mode" not in st.session_state:
     st.session_state.selected_mode = None
 
-rows = [
-    st.columns(2),
-    st.columns(2),
-    st.columns(2),
-    st.columns(1)
-]
-
+cols = [st.columns(2) for _ in range(3)] + [st.columns(1)]
 i = 0
-for row in rows:
+for row in cols:
     for col in row:
         if i >= len(menu_items):
             break
         with col:
-            if st.button(
-                menu_items[i],
-                key=f"cat-{i}",
-                use_container_width=True
-            ):
+            if st.button(menu_items[i], key=f"cat-{i}", use_container_width=True):
                 st.session_state.selected_mode = menu_items[i]
         i += 1
 
-# ------------------ PICK YOUR TOPIC ------------------
-
+# ── CUSTOM TOPIC ────────────────────────────────────────────────
 st.markdown("---")
 st.markdown("### Pick your own topic")
 
-custom_topic = st.text_input("Enter any topic you want to learn:")
-
-if st.button("Start custom topic") and custom_topic.strip():
+custom_topic_input = st.text_input("Enter any topic you want to learn:")
+if st.button("Start custom topic") and custom_topic_input.strip():
     st.session_state.selected_mode = "custom"
-    st.session_state.custom_topic = custom_topic.strip()
+    st.session_state.custom_topic = custom_topic_input.strip()
 
 st.divider()
 
-# ------------------ START QUIZ FROM MENU ------------------
-
+# ── DIFFICULTY SELECTION ────────────────────────────────────────
 st.markdown("### Difficulty")
-
 difficulty = st.radio(
     "Choose level:",
     ["Easy", "Medium", "Hard"],
@@ -221,51 +186,45 @@ difficulty = st.radio(
     index=1
 )
 
-difficulty_map = {
-    "Easy": "easy",
-    "Medium": "medium",
-    "Hard": "hard"
-}
-
+difficulty_map = {"Easy": "easy", "Medium": "medium", "Hard": "hard"}
 selected_difficulty = difficulty_map[difficulty]
 
 
-def start_quiz(topic, num_questions=4):
+def start_quiz(topic, num_questions=4, is_adaptive=False):
     with st.spinner("🧠 Creating your quiz..."):
-        quiz_data, err = post(
-            f"{BACKEND}/generate-quiz",
-            {
-                "topic": topic,
-                "start_difficulty": selected_difficulty,
-                "num_questions": num_questions
-            }
-        )
+        payload = {
+            "topic": topic,
+            "start_difficulty": selected_difficulty,
+            "num_questions": num_questions,
+            "user_id": st.session_state.user_id
+        }
+        if is_adaptive:
+            # For adaptive mode we already have difficulty from /next-topic
+            payload.pop("start_difficulty", None)
+
+        quiz_data, err = post(f"{BACKEND}/generate-quiz", payload)
 
     if err:
-        st.error(err)
-        return
+        st.error(f"Quiz generation failed: {err}")
+        return False
+
+    if not quiz_data or "questions" not in quiz_data:
+        st.error("Invalid quiz data from server")
+        return False
 
     st.session_state.quiz = quiz_data["questions"]
     st.session_state.index = 0
     st.session_state.show_feedback = False
     st.session_state.round_correct = 0
 
-    # non-mastery modes don’t affect topic mastery
-    st.session_state.meta = {
-        "field_id": None,
-        "topic_id": None
-    }
+    # Non-adaptive modes don't use mastery
+    if not is_adaptive:
+        st.session_state.meta = {"field_id": None, "topic_id": None}
 
-    # ⚡ prefetch next round in background
-    threading.Thread(
-        target=prefetch_next,
-        args=(topic, num_questions),
-        daemon=True
-    ).start()
+    return True
 
 
-# ------------------ AUTO START BASED ON MENU ------------------
-
+# ── AUTO-START LOGIC ────────────────────────────────────────────
 selected = st.session_state.get("selected_mode")
 
 field_map = {
@@ -278,61 +237,46 @@ field_map = {
 }
 
 if selected in field_map and not st.session_state.quiz:
-    with st.spinner("🧠 Creating your quiz..."):
-        start_quiz(field_map[selected], num_questions=4)
-    st.rerun()
+    if start_quiz(field_map[selected], num_questions=4):
+        threading.Thread(
+            target=prefetch_next,
+            args=(field_map[selected], 4, selected_difficulty),
+            daemon=True
+        ).start()
+        st.rerun()
 
-if selected == "custom" and not st.session_state.quiz:
-    with st.spinner("🧠 Creating your quiz..."):
-        start_quiz(st.session_state.custom_topic, num_questions=4)
-    st.rerun()
+if selected == "custom" and not st.session_state.quiz and "custom_topic" in st.session_state:
+    if start_quiz(st.session_state.custom_topic, num_questions=4):
+        threading.Thread(
+            target=prefetch_next,
+            args=(st.session_state.custom_topic, 4, selected_difficulty),
+            daemon=True
+        ).start()
+        st.rerun()
 
-
-# -------- General Knowledge (adaptive mastery) --------
-
-if st.session_state.get("selected_mode") == "🎯 General Knowledge" and not st.session_state.quiz:
-
+# ── ADAPTIVE GENERAL KNOWLEDGE MODE ─────────────────────────────
+if selected == "🎯 General Knowledge" and not st.session_state.quiz:
     data, err = post(
         f"{BACKEND}/next-topic",
         {"user_id": st.session_state.user_id}
     )
 
-    if err:
-        st.error(err)
+    if err or not data:
+        st.error("Could not load next topic")
     else:
         st.session_state.meta = data
 
-        with st.spinner("🧠 Creating your quiz..."):
-            quiz_data, err = post(
-                f"{BACKEND}/generate-quiz",
-                {
-                    "topic": data["topic"],
-                    "start_difficulty": data["start_difficulty"],
-                    "num_questions": 3
-                }
-            )
-
-        if err:
-            st.error(err)
-        else:
-            st.session_state.quiz = quiz_data["questions"]
-            st.session_state.index = 0
-            st.session_state.show_feedback = False
-            st.session_state.round_correct = 0
-
+        # Use difficulty coming from backend
+        if start_quiz(data["topic"], num_questions=3, is_adaptive=True):
             threading.Thread(
                 target=prefetch_next,
-                args=(data["topic"], 3),
+                args=(data["topic"], 3, data["start_difficulty"]),
                 daemon=True
             ).start()
+            st.rerun()
 
-# ------------------ ERROR ------------------
 
-if st.session_state.error:
-    st.error(st.session_state.error)
-
-# ------------------ QUIZ ------------------
-
+# ── QUIZ DISPLAY ────────────────────────────────────────────────
 st.markdown("""
 <style>
 .quiz-card {
@@ -342,54 +286,36 @@ st.markdown("""
     box-shadow: 0 6px 16px rgba(0,0,0,.08);
     margin-bottom: 18px;
 }
-
 .quiz-question {
     font-size: 1.3rem;
     font-weight: 600;
     margin-bottom: 18px;
     line-height: 1.4;
 }
-
-.feedback-good {
-    background:#e9fff3;
-    padding:16px;
-    border-radius:14px;
-    font-weight:600;
-}
-
-.feedback-bad {
-    background:#ffecec;
-    padding:16px;
-    border-radius:14px;
-    font-weight:600;
-}
-
-.stButton button {
-    border-radius: 12px;
-    height: 48px;
-}
+.feedback-good  { background:#e9fff3; padding:16px; border-radius:14px; font-weight:600; }
+.feedback-bad   { background:#ffecec; padding:16px; border-radius:14px; font-weight:600; }
+.stButton button { border-radius: 12px; height: 48px; }
 </style>
 """, unsafe_allow_html=True)
 
 
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
-
     q = st.session_state.quiz[st.session_state.index]
 
     st.markdown(
-        f"<div class='quiz-card'><div class='quiz-question'>{q.get('question','')}</div></div>",
+        f"<div class='quiz-card'><div class='quiz-question'>{q.get('question', '—')}</div></div>",
         unsafe_allow_html=True
     )
 
     if not st.session_state.show_feedback:
-
-        if not isinstance(q.get("choices"), dict):
+        choices = q.get("choices", {})
+        if not isinstance(choices, dict):
             st.session_state.index += 1
             st.rerun()
 
-        options = [f"{k}. {v}" for k, v in q["choices"].items()]
+        options = [f"{k}. {v}" for k, v in choices.items()]
 
-        selected = st.radio(
+        selected_answer = st.radio(
             "Select an answer:",
             options,
             index=None,
@@ -397,74 +323,63 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         )
 
         if st.button("Submit answer", use_container_width=True):
-
-            if selected is None:
-                st.warning("Choose an option first")
+            if not selected_answer:
+                st.warning("Please select an answer first")
                 st.stop()
 
-            letter = selected.split(".")[0].strip().upper()
-            correct_raw = q.get("correct")
+            letter = selected_answer.split(".", 1)[0].strip().upper()
+            correct_letter = str(q.get("correct", "")).strip().upper()
 
-            if not isinstance(correct_raw, str):
-                st.session_state.index += 1
-                st.session_state.show_feedback = False
-                st.rerun()
+            is_correct = (letter == correct_letter)
 
-            correct_key = correct_raw.strip().upper()
-            correct = (letter == correct_key)
-
+            # Submit to backend — use question_id instead of text
             requests.post(
-    f"{BACKEND}/submit-answer",
-    json={
-        "user_id": st.session_state.user_id,
-        "field_id": st.session_state.meta.get("field_id"),
-        "topic_id": st.session_state.meta.get("topic_id"),
-        "correct": correct,
-        "question_text": q.get("question")
-    },
-    timeout=5
-)
+                f"{BACKEND}/submit-answer",
+                json={
+                    "user_id": st.session_state.user_id,
+                    "field_id": st.session_state.meta.get("field_id"),
+                    "topic_id": st.session_state.meta.get("topic_id"),
+                    "question_id": q.get("id"),
+                    "correct": is_correct
+                },
+                timeout=5
+            )
 
             st.session_state.total_answered += 1
-            if correct:
+            if is_correct:
                 st.session_state.total_correct += 1
                 st.session_state.round_correct += 1
 
-            st.session_state.last_correct = correct
+            st.session_state.last_correct = is_correct
             st.session_state.last_explanation = q.get("explanation", "")
             st.session_state.show_feedback = True
             st.rerun()
 
     else:
-
         if st.session_state.last_correct:
-            st.markdown(
-                "<div class='feedback-good'>✅ Correct!</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown("<div class='feedback-good'>✅ Correct!</div>", unsafe_allow_html=True)
         else:
             correct_letter = q.get("correct", "?")
-            correct_text = q["choices"].get(correct_letter, "Unknown")
-
+            correct_text = q["choices"].get(correct_letter, "—")
             st.markdown(
                 f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
                 unsafe_allow_html=True
             )
 
-        st.info(st.session_state.last_explanation)
+        if st.session_state.last_explanation:
+            st.info(st.session_state.last_explanation)
 
         if st.button("Next question →", use_container_width=True):
             st.session_state.show_feedback = False
             st.session_state.index += 1
             st.rerun()
-# ------------------ FINISHED ------------------
 
+
+# ── ROUND FINISHED ──────────────────────────────────────────────
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
-
     score = st.session_state.round_correct
     total = len(st.session_state.quiz)
-
-    percent = int((score / total) * 100) if total else 0
+    percent = int((score / total) * 100) if total > 0 else 0
 
     st.markdown("### Round complete 🎯")
     st.progress(percent / 100)
@@ -475,20 +390,15 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
     else:
         st.info("Nice effort — let’s keep practicing 💪")
 
-    st.write("")
-
     if st.button("Next round ▶", use_container_width=True):
-
-        # reset round state
+        # Reset round
         st.session_state.round_correct = 0
         st.session_state.show_feedback = False
         st.session_state.index = 0
 
         selected = st.session_state.get("selected_mode")
 
-        # -------- Adaptive General Knowledge --------
         if selected == "🎯 General Knowledge":
-
             data, err = post(
                 f"{BACKEND}/next-topic",
                 {"user_id": st.session_state.user_id}
@@ -496,85 +406,44 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
             if err or not data:
                 st.error("Couldn't load next topic — try again")
-                st.stop()
-
-            st.session_state.meta = data
-
-            # 👉 use prefetched if available
-            if st.session_state.next_quiz:
-                st.session_state.quiz = st.session_state.next_quiz
-                st.session_state.next_quiz = []
             else:
-                quiz_data, err = post(
-                    f"{BACKEND}/generate-quiz",
-                    {
-                        "topic": data["topic"],
-                        "start_difficulty": data["start_difficulty"],
-                        "num_questions": 3
-                    }
-                )
+                st.session_state.meta = data
 
-                if err:
-                    st.error("Generation failed — retry")
-                    st.stop()
+                if st.session_state.next_quiz:
+                    st.session_state.quiz = st.session_state.next_quiz
+                    st.session_state.next_quiz = []
+                else:
+                    start_quiz(data["topic"], num_questions=3, is_adaptive=True)
 
-                st.session_state.quiz = quiz_data["questions"]
+                threading.Thread(
+                    target=prefetch_next,
+                    args=(data["topic"], 3, data.get("start_difficulty", selected_difficulty)),
+                    daemon=True
+                ).start()
+                st.rerun()
 
-            # ⚡ prefetch again
-            threading.Thread(
-                target=prefetch_next,
-                args=(data["topic"], 3),
-                daemon=True
-            ).start()
-
-            st.rerun()
-
-        # -------- All other modes --------
         else:
-
-            field_map = {
-                "🧪 Science": "Science trivia",
-                "🏀 Sports": "sports trivia",
-                "🎬 Entertainment": "movie and celebrity trivia",
-                "📜 History": "history trivia",
-                "🌍 Geography": "world geography trivia",
-                "📰 Recent News": "current events trivia"
-            }
-
-            if selected == "custom":
-                topic = st.session_state.custom_topic
-            else:
-                topic = field_map.get(selected)
+            # Non-adaptive modes
+            topic = (
+                st.session_state.custom_topic
+                if selected == "custom"
+                else field_map.get(selected)
+            )
 
             if not topic:
                 st.session_state.quiz = []
                 st.rerun()
+                return
 
-            # 👉 use prefetched if available
             if st.session_state.next_quiz:
                 st.session_state.quiz = st.session_state.next_quiz
                 st.session_state.next_quiz = []
             else:
-                quiz_data, err = post(
-                    f"{BACKEND}/generate-quiz",
-                    {
-                        "topic": topic,
-                        "start_difficulty": selected_difficulty,
-                        "num_questions": 4
-                    }
-                )
+                start_quiz(topic, num_questions=4)
 
-                if err:
-                    st.error("Generation failed — retry")
-                    st.stop()
-
-                st.session_state.quiz = quiz_data["questions"]
-
-            # ⚡ prefetch again
             threading.Thread(
                 target=prefetch_next,
-                args=(topic, 4),
+                args=(topic, 4, selected_difficulty),
                 daemon=True
             ).start()
-
             st.rerun()
