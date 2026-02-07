@@ -305,7 +305,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             key=f"radio-{st.session_state.index}"
         )
 
-        if st.button("Submit answer", use_container_width=True):
+        on("Submit answer", use_container_width=True):
             if not selected_answer:
                 st.warning("Please select an answer first")
                 st.stop()
@@ -351,11 +351,46 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         if st.session_state.last_explanation:
             st.info(st.session_state.last_explanation)
 
-        if st.button("Next question →", use_container_width=True):
-            st.session_state.show_feedback = False
-            st.session_state.index += 1
-            st.rerun()
+        if st.button("Submit answer", use_container_width=True):
+    if not selected_answer:
+        st.warning("Please select an answer first")
+        st.stop()
 
+    # Debug: show what is being sent
+    st.info(f"Debug: Sending question_id = {q.get('id')} | correct = {is_correct}")
+
+    letter = selected_answer.split(".", 1)[0].strip().upper()
+    correct_letter = str(q.get("correct", "")).strip().upper()
+    is_correct = (letter == correct_letter)
+
+    # Send to backend
+    try:
+        response = requests.post(
+            f"{BACKEND}/submit-answer",
+            json={
+                "user_id": st.session_state.user_id,
+                "field_id": st.session_state.meta.get("field_id"),
+                "topic_id": st.session_state.meta.get("topic_id"),
+                "question_id": q.get("id"),
+                "correct": is_correct
+            },
+            timeout=5
+        )
+        st.success(f"Submit status: {response.status_code}")
+        if response.status_code != 200:
+            st.error(f"Error: {response.text}")
+    except Exception as e:
+        st.error(f"Request failed: {str(e)}")
+
+    st.session_state.total_answered += 1
+    if is_correct:
+        st.session_state.total_correct += 1
+        st.session_state.round_correct += 1
+
+    st.session_state.last_correct = is_correct
+    st.session_state.last_explanation = q.get("explanation", "")
+    st.session_state.show_feedback = True
+    st.rerun()
 
 # ── ROUND FINISHED ──────────────────────────────────────────────
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
