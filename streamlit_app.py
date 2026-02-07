@@ -280,7 +280,6 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
             ).start()
             st.rerun()
 
-
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
     q = st.session_state.quiz[st.session_state.index]
@@ -304,52 +303,6 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             index=None,
             key=f"radio-{st.session_state.index}"
         )
-
-        on("Submit answer", use_container_width=True):
-            if not selected_answer:
-                st.warning("Please select an answer first")
-                st.stop()
-
-            letter = selected_answer.split(".", 1)[0].strip().upper()
-            correct_letter = str(q.get("correct", "")).strip().upper()
-
-            is_correct = (letter == correct_letter)
-
-            requests.post(
-                f"{BACKEND}/submit-answer",
-                json={
-                    "user_id": st.session_state.user_id,
-                    "field_id": st.session_state.meta.get("field_id"),
-                    "topic_id": st.session_state.meta.get("topic_id"),
-                    "question_id": q.get("id"),
-                    "correct": is_correct
-                },
-                timeout=5
-            )
-
-            st.session_state.total_answered += 1
-            if is_correct:
-                st.session_state.total_correct += 1
-                st.session_state.round_correct += 1
-
-            st.session_state.last_correct = is_correct
-            st.session_state.last_explanation = q.get("explanation", "")
-            st.session_state.show_feedback = True
-            st.rerun()
-
-    else:
-        if st.session_state.last_correct:
-            st.markdown("<div class='feedback-good'>✅ Correct!</div>", unsafe_allow_html=True)
-        else:
-            correct_letter = q.get("correct", "?")
-            correct_text = q["choices"].get(correct_letter, "—")
-            st.markdown(
-                f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
-                unsafe_allow_html=True
-            )
-
-        if st.session_state.last_explanation:
-            st.info(st.session_state.last_explanation)
 
         if st.button("Submit answer", use_container_width=True):
             if not selected_answer:
@@ -390,6 +343,25 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             st.session_state.last_correct = is_correct
             st.session_state.last_explanation = q.get("explanation", "")
             st.session_state.show_feedback = True
+            st.rerun()
+
+    else:
+        if st.session_state.last_correct:
+            st.markdown("<div class='feedback-good'>✅ Correct!</div>", unsafe_allow_html=True)
+        else:
+            correct_letter = q.get("correct", "?")
+            correct_text = q["choices"].get(correct_letter, "—")
+            st.markdown(
+                f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
+                unsafe_allow_html=True
+            )
+
+        if st.session_state.last_explanation:
+            st.info(st.session_state.last_explanation)
+
+        if st.button("Next question →", use_container_width=True):
+            st.session_state.show_feedback = False
+            st.session_state.index += 1
             st.rerun()
 
 # ── ROUND FINISHED ──────────────────────────────────────────────
