@@ -424,26 +424,27 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
 
         else:
             # Non-adaptive modes
-            topic = (
-                st.session_state.custom_topic
-                if selected == "custom"
-                else field_map.get(selected)
-            )
+topic = (
+    st.session_state.custom_topic
+    if selected == "custom"
+    else field_map.get(selected)
+)
 
-            if not topic:
-                st.session_state.quiz = []
-                st.rerun()
-                return
+if not topic:
+    st.session_state.quiz = []
+    st.rerun()
+    # removed invalid 'return' — st.rerun() already restarts the script
+    # no need to stop further execution here
 
-            if st.session_state.next_quiz:
-                st.session_state.quiz = st.session_state.next_quiz
-                st.session_state.next_quiz = []
-            else:
-                start_quiz(topic, num_questions=4)
+if st.session_state.next_quiz:
+    st.session_state.quiz = st.session_state.next_quiz
+    st.session_state.next_quiz = []
+else:
+    start_quiz(topic, num_questions=4)
 
-            threading.Thread(
-                target=prefetch_next,
-                args=(topic, 4, selected_difficulty),
-                daemon=True
-            ).start()
-            st.rerun()
+threading.Thread(
+    target=prefetch_next,
+    args=(topic, 4, selected_difficulty),
+    daemon=True
+).start()
+st.rerun()
