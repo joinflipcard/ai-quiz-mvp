@@ -311,10 +311,9 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
 
             letter = selected_answer.split(".", 1)[0].strip().upper()
             correct_letter = str(q.get("correct", "")).strip().upper()
-
             is_correct = (letter == correct_letter)
 
-            # Debug line — shows question_id and correctness
+            # Debug line
             st.info(f"Debug: Sending question_id = {q.get('id')} | correct = {is_correct}")
 
             # Send to backend
@@ -326,13 +325,15 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
                         "field_id": st.session_state.meta.get("field_id"),
                         "topic_id": st.session_state.meta.get("topic_id"),
                         "question_id": q.get("id"),
+                        "question_text": q.get("question"),  # ← REQUIRED FIX
                         "correct": is_correct
                     },
                     timeout=5
                 )
-                st.success(f"Submit status: {response.status_code}")
+
                 if response.status_code != 200:
                     st.error(f"Error from backend: {response.text}")
+
             except Exception as e:
                 st.error(f"Request failed: {str(e)}")
 
