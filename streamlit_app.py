@@ -182,9 +182,15 @@ custom_topic_input = st.text_input(
     placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…"
 )
 
+custom_topic_input = st.text_input(
+    "Choose your own topic",
+    placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…"
+)
+
 if custom_topic_input.strip():
-    select_mode("custom")
-    st.session_state.custom_topic = custom_topic_input.strip()
+    if st.button("Start custom quiz", use_container_width=True):
+        select_mode("custom")
+        st.session_state.custom_topic = custom_topic_input.strip()
 
 st.markdown("---")
 
