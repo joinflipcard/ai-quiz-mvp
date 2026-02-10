@@ -176,25 +176,21 @@ def select_mode(mode):
     st.session_state.show_feedback = False
     st.session_state.round_correct = 0
 
-# ⭐ Pinned custom topic (does NOT interfere with General Knowledge)
+# ⭐ Custom topic (explicit start — no auto-trigger)
 custom_topic_input = st.text_input(
     "Choose your own topic",
-    placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…"
-)
-
-custom_topic_input = st.text_input(
-    "Choose your own topic",
-    placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…"
+    placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…",
+    key="custom_topic_input"
 )
 
 if custom_topic_input.strip():
-    if st.button("Start custom quiz", use_container_width=True):
+    if st.button("Start custom quiz", use_container_width=True, key="start_custom_quiz"):
         select_mode("custom")
         st.session_state.custom_topic = custom_topic_input.strip()
 
 st.markdown("---")
 
-# Categories in compact 3x2 grid (no Recent News)
+# Categories in compact 3x2 grid
 cols = st.columns(3)
 
 with cols[0]:
