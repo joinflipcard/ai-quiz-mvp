@@ -150,39 +150,44 @@ def prefetch_next(topic, num_questions, difficulty):
         return
     st.session_state.next_quiz = quiz_data["questions"]
 
-
 # ── CATEGORY MENU ───────────────────────────────────────────────
-st.markdown("## Choose a category")
+st.markdown("## Choose a category or enter your own topic")
 
-menu_items = [
-    "🎯 General Knowledge",
-    "🧪 Science",
-    "🏀 Sports",
-    "🎬 Entertainment",
-    "📜 History",
-    "🌍 Geography",
-    "📰 Recent News"
-]
+# ⭐ Pinned custom topic (does NOT interfere with General Knowledge)
+custom_topic_input = st.text_input(
+    "Choose your own topic",
+    placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…"
+)
 
-cols = [st.columns(2) for _ in range(3)] + [st.columns(1)]
-i = 0
-for row in cols:
-    for col in row:
-        if i >= len(menu_items):
-            break
-        with col:
-            if st.button(menu_items[i], key=f"cat-{i}", use_container_width=True):
-                st.session_state.selected_mode = menu_items[i]
-        i += 1
-
-# ── CUSTOM TOPIC ────────────────────────────────────────────────
-st.markdown("---")
-st.markdown("### Pick your own topic")
-
-custom_topic_input = st.text_input("Enter any topic you want to learn:")
-if st.button("Start custom topic") and custom_topic_input.strip():
+if custom_topic_input.strip():
     st.session_state.selected_mode = "custom"
     st.session_state.custom_topic = custom_topic_input.strip()
+
+st.markdown("---")
+
+# Categories in compact 3x2 grid (no Recent News)
+cols = st.columns(3)
+
+with cols[0]:
+    if st.button("🎯 General Knowledge", key="cat-general", use_container_width=True):
+        st.session_state.selected_mode = "🎯 General Knowledge"
+
+    if st.button("🏀 Sports", key="cat-sports", use_container_width=True):
+        st.session_state.selected_mode = "🏀 Sports"
+
+with cols[1]:
+    if st.button("🧪 Science", key="cat-science", use_container_width=True):
+        st.session_state.selected_mode = "🧪 Science"
+
+    if st.button("🎬 Entertainment", key="cat-entertainment", use_container_width=True):
+        st.session_state.selected_mode = "🎬 Entertainment"
+
+with cols[2]:
+    if st.button("📜 History", key="cat-history", use_container_width=True):
+        st.session_state.selected_mode = "📜 History"
+
+    if st.button("🌍 Geography", key="cat-geo", use_container_width=True):
+        st.session_state.selected_mode = "🌍 Geography"
 
 st.divider()
 
