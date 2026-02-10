@@ -168,6 +168,14 @@ def prefetch_next(topic, num_questions, difficulty):
 # ── CATEGORY MENU ───────────────────────────────────────────────
 st.markdown("## Choose a category or enter your own topic")
 
+# Helper: category click = start fresh
+def select_mode(mode):
+    st.session_state.selected_mode = mode
+    st.session_state.quiz = []
+    st.session_state.index = 0
+    st.session_state.show_feedback = False
+    st.session_state.round_correct = 0
+
 # ⭐ Pinned custom topic (does NOT interfere with General Knowledge)
 custom_topic_input = st.text_input(
     "Choose your own topic",
@@ -175,7 +183,7 @@ custom_topic_input = st.text_input(
 )
 
 if custom_topic_input.strip():
-    st.session_state.selected_mode = "custom"
+    select_mode("custom")
     st.session_state.custom_topic = custom_topic_input.strip()
 
 st.markdown("---")
@@ -185,24 +193,24 @@ cols = st.columns(3)
 
 with cols[0]:
     if st.button("🎯 General Knowledge", key="cat-general", use_container_width=True):
-        st.session_state.selected_mode = "🎯 General Knowledge"
+        select_mode("🎯 General Knowledge")
 
     if st.button("🏀 Sports", key="cat-sports", use_container_width=True):
-        st.session_state.selected_mode = "🏀 Sports"
+        select_mode("🏀 Sports")
 
 with cols[1]:
     if st.button("🧪 Science", key="cat-science", use_container_width=True):
-        st.session_state.selected_mode = "🧪 Science"
+        select_mode("🧪 Science")
 
     if st.button("🎬 Entertainment", key="cat-entertainment", use_container_width=True):
-        st.session_state.selected_mode = "🎬 Entertainment"
+        select_mode("🎬 Entertainment")
 
 with cols[2]:
     if st.button("📜 History", key="cat-history", use_container_width=True):
-        st.session_state.selected_mode = "📜 History"
+        select_mode("📜 History")
 
     if st.button("🌍 Geography", key="cat-geo", use_container_width=True):
-        st.session_state.selected_mode = "🌍 Geography"
+        select_mode("🌍 Geography")
 
 st.divider()
 
@@ -225,7 +233,7 @@ def start_quiz(topic, num_questions=4, is_adaptive=False):
             "topic": topic,
             "start_difficulty": selected_difficulty,
             "num_questions": num_questions,
-            "user_id": st.session_state.user_id   # ← added here
+            "user_id": st.session_state.user_id   # ← unchanged
         }
         if is_adaptive:
             payload.pop("start_difficulty", None)
@@ -249,7 +257,6 @@ def start_quiz(topic, num_questions=4, is_adaptive=False):
         st.session_state.meta = {"field_id": None, "topic_id": None}
 
     return True
-
 
 # ── AUTO-START LOGIC ────────────────────────────────────────────
 selected = st.session_state.get("selected_mode")
