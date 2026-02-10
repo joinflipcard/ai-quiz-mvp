@@ -10,6 +10,21 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# 🔧 REMOVE STREAMLIT TOP BANNER + FIX OVERLAP
+st.markdown(
+    """
+    <style>
+    header[data-testid="stHeader"] {
+        display: none;
+    }
+    .block-container {
+        padding-top: 1rem !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
 # ── Basic styling ───────────────────────────────────────────────
