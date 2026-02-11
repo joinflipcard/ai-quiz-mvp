@@ -165,6 +165,40 @@ def prefetch_next(topic, num_questions, difficulty):
         return
     st.session_state.next_quiz = quiz_data["questions"]
 
+# ── START QUIZ FUNCTION ─────────────────────────────────────────
+def start_quiz(topic, difficulty, num_questions=4, is_adaptive=False, mode="quiz"):
+    with st.spinner("🧠 Creating your quiz..."):
+        payload = {
+            "topic": topic,
+            "start_difficulty": difficulty,
+            "num_questions": num_questions,
+            "user_id": st.session_state.user_id,
+            "mode": mode
+        }
+
+        if is_adaptive:
+            payload.pop("start_difficulty", None)
+
+        quiz_data, err = post(f"{BACKEND}/generate-quiz", payload)
+
+    if err:
+        st.error(f"Quiz generation failed: {err}")
+        return False
+
+    if not quiz_data or "questions" not in quiz_data:
+        st.error("Invalid quiz data from server")
+        return False
+
+    st.session_state.quiz = quiz_data["questions"]
+    st.session_state.index = 0
+    st.session_state.show_feedback = False
+    st.session_state.round_correct = 0
+
+    if not is_adaptive:
+        st.session_state.meta = {"field_id": None, "topic_id": None}
+
+    return True
+
 # ── CATEGORY MENU ───────────────────────────────────────────────
 st.markdown("## Choose a category or enter your own topic")
 
@@ -248,41 +282,6 @@ difficulty_map = {
 
 selected_difficulty = difficulty_map[difficulty]
 
-
-# ── START QUIZ FUNCTION ─────────────────────────────────────────
-def start_quiz(topic, num_questions=4, is_adaptive=False, mode="quiz"):
-    with st.spinner("🧠 Creating your quiz..."):
-        payload = {
-            "topic": topic,
-            "start_difficulty": selected_difficulty,
-            "num_questions": num_questions,
-            "user_id": st.session_state.user_id,
-            "mode": mode  # NEW: tells backend quiz vs tutorial
-        }
-
-        # Adaptive mode removes fixed difficulty
-        if is_adaptive:
-            payload.pop("start_difficulty", None)
-
-        quiz_data, err = post(f"{BACKEND}/generate-quiz", payload)
-
-    if err:
-        st.error(f"Quiz generation failed: {err}")
-        return False
-
-    if not quiz_data or "questions" not in quiz_data:
-        st.error("Invalid quiz data from server")
-        return False
-
-    st.session_state.quiz = quiz_data["questions"]
-    st.session_state.index = 0
-    st.session_state.show_feedback = False
-    st.session_state.round_correct = 0
-
-    if not is_adaptive:
-        st.session_state.meta = {"field_id": None, "topic_id": None}
-
-    return True
 
 # ── MODE SELECTION (REPLACES AUTO-START) ───────────────────────
 selected = st.session_state.get("selected_mode")
