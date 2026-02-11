@@ -226,16 +226,15 @@ if custom_topic_input.strip():
         if st.button("🚀 Start Quiz", use_container_width=True, key="custom_quiz_start"):
             select_mode("custom")
             st.session_state.custom_topic = custom_topic_input.strip()
-            start_quiz(st.session_state.custom_topic, num_questions=4, mode="quiz")
-            st.rerun()
+            if start_quiz(st.session_state.custom_topic, selected_difficulty, num_questions=4, mode="quiz"):
+                st.rerun()
 
     with col2:
         if st.button("🧠 Start Tutorial", use_container_width=True, key="custom_tutorial_start"):
             select_mode("custom")
             st.session_state.custom_topic = custom_topic_input.strip()
-            start_quiz(st.session_state.custom_topic, num_questions=6, mode="tutorial")
-            st.rerun()
-
+            if start_quiz(st.session_state.custom_topic, selected_difficulty, num_questions=6, mode="tutorial"):
+                st.rerun()
 st.markdown("---")
 
 # Categories in compact 3x2 grid
@@ -305,7 +304,7 @@ if selected in field_map and not st.session_state.quiz:
 
     with col1:
         if st.button("🚀 Start Quiz", use_container_width=True, key="start_quiz_btn"):
-            if start_quiz(topic_name, num_questions=4, mode="quiz"):
+            if start_quiz(topic_name, selected_difficulty, num_questions=4, mode="quiz"):
                 threading.Thread(
                     target=prefetch_next,
                     args=(topic_name, 4, selected_difficulty),
@@ -315,9 +314,8 @@ if selected in field_map and not st.session_state.quiz:
 
     with col2:
         if st.button("🧠 Start Tutorial", use_container_width=True, key="start_tutorial_btn"):
-            if start_quiz(topic_name, num_questions=6, mode="tutorial"):
+            if start_quiz(topic_name, selected_difficulty, num_questions=6, mode="tutorial"):
                 st.rerun()
-
 
 # ── ADAPTIVE GENERAL KNOWLEDGE MODE ─────────────────────────────
 if selected == "🎯 General Knowledge" and not st.session_state.quiz:
@@ -330,7 +328,7 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
         st.error("Could not load next topic")
     else:
         st.session_state.meta = data
-        if start_quiz(data["topic"], num_questions=3, is_adaptive=True):
+        if if start_quiz(data["topic"], data.get("start_difficulty", selected_difficulty), num_questions=3, is_adaptive=True):
             threading.Thread(
                 target=prefetch_next,
                 args=(data["topic"], 3, data["start_difficulty"]),
@@ -462,7 +460,12 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
                     st.session_state.quiz = st.session_state.next_quiz
                     st.session_state.next_quiz = []
                 else:
-                    start_quiz(data["topic"], num_questions=3, is_adaptive=True)
+                    start_quiz(
+                        data["topic"],
+                        data.get("start_difficulty", selected_difficulty),
+                        num_questions=3,
+                        is_adaptive=True
+                    )
 
                 threading.Thread(
                     target=prefetch_next,
