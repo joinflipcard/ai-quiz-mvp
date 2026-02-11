@@ -328,10 +328,10 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
         st.error("Could not load next topic")
     else:
         st.session_state.meta = data
-        if if start_quiz(data["topic"], data.get("start_difficulty", selected_difficulty), num_questions=3, is_adaptive=True):
+        if start_quiz(data["topic"], data.get("start_difficulty", selected_difficulty), num_questions=3, is_adaptive=True):
             threading.Thread(
                 target=prefetch_next,
-                args=(data["topic"], 3, data["start_difficulty"]),
+                args=(data["topic"], 3, data.get("start_difficulty", selected_difficulty)),
                 daemon=True
             ).start()
             st.rerun()
@@ -490,7 +490,7 @@ if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz
                     st.session_state.quiz = st.session_state.next_quiz
                     st.session_state.next_quiz = []
                 else:
-                    start_quiz(topic, num_questions=4)
+                    start_quiz(topic, selected_difficulty, num_questions=4)
 
                 threading.Thread(
                     target=prefetch_next,
