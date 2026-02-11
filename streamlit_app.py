@@ -199,6 +199,24 @@ def start_quiz(topic, difficulty, num_questions=4, is_adaptive=False, mode="quiz
 
     return True
 
+# ── DIFFICULTY SELECTION ────────────────────────────────────────
+st.markdown("### Difficulty")
+
+difficulty = st.radio(
+    "Choose level:",
+    ["Easy", "Medium", "Hard"],
+    horizontal=True,
+    index=1
+)
+
+difficulty_map = {
+    "Easy": "easy",
+    "Medium": "medium",
+    "Hard": "hard"
+}
+
+selected_difficulty = difficulty_map[difficulty]
+
 # ── CATEGORY MENU ───────────────────────────────────────────────
 st.markdown("## Choose a category or enter your own topic")
 
@@ -262,25 +280,6 @@ with cols[2]:
         select_mode("🌍 Geography")
 
 st.divider()
-
-# ── DIFFICULTY SELECTION ────────────────────────────────────────
-st.markdown("### Difficulty")
-
-difficulty = st.radio(
-    "Choose level:",
-    ["Easy", "Medium", "Hard"],
-    horizontal=True,
-    index=1
-)
-
-difficulty_map = {
-    "Easy": "easy",
-    "Medium": "medium",
-    "Hard": "hard"
-}
-
-selected_difficulty = difficulty_map[difficulty]
-
 
 # ── MODE SELECTION (REPLACES AUTO-START) ───────────────────────
 selected = st.session_state.get("selected_mode")
