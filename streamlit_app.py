@@ -184,9 +184,23 @@ custom_topic_input = st.text_input(
 )
 
 if custom_topic_input.strip():
-    if st.button("Start custom quiz", use_container_width=True, key="start_custom_quiz"):
-        select_mode("custom")
-        st.session_state.custom_topic = custom_topic_input.strip()
+    st.markdown("### Choose Mode")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("🚀 Start Quiz", use_container_width=True, key="custom_quiz_start"):
+            select_mode("custom")
+            st.session_state.custom_topic = custom_topic_input.strip()
+            start_quiz(st.session_state.custom_topic, num_questions=4, mode="quiz")
+            st.rerun()
+
+    with col2:
+        if st.button("🧠 Start Tutorial", use_container_width=True, key="custom_tutorial_start"):
+            select_mode("custom")
+            st.session_state.custom_topic = custom_topic_input.strip()
+            start_quiz(st.session_state.custom_topic, num_questions=6, mode="tutorial")
+            st.rerun()
 
 st.markdown("---")
 
@@ -218,6 +232,7 @@ st.divider()
 
 # ── DIFFICULTY SELECTION ────────────────────────────────────────
 st.markdown("### Difficulty")
+
 difficulty = st.radio(
     "Choose level:",
     ["Easy", "Medium", "Hard"],
@@ -225,18 +240,27 @@ difficulty = st.radio(
     index=1
 )
 
-difficulty_map = {"Easy": "easy", "Medium": "medium", "Hard": "hard"}
+difficulty_map = {
+    "Easy": "easy",
+    "Medium": "medium",
+    "Hard": "hard"
+}
+
 selected_difficulty = difficulty_map[difficulty]
 
 
-def start_quiz(topic, num_questions=4, is_adaptive=False):
+# ── START QUIZ FUNCTION ─────────────────────────────────────────
+def start_quiz(topic, num_questions=4, is_adaptive=False, mode="quiz"):
     with st.spinner("🧠 Creating your quiz..."):
         payload = {
             "topic": topic,
             "start_difficulty": selected_difficulty,
             "num_questions": num_questions,
-            "user_id": st.session_state.user_id   # ← unchanged
+            "user_id": st.session_state.user_id,
+            "mode": mode  # NEW: tells backend quiz vs tutorial
         }
+
+        # Adaptive mode removes fixed difficulty
         if is_adaptive:
             payload.pop("start_difficulty", None)
 
@@ -260,7 +284,7 @@ def start_quiz(topic, num_questions=4, is_adaptive=False):
 
     return True
 
-# ── AUTO-START LOGIC ────────────────────────────────────────────
+# ── MODE SELECTION (REPLACES AUTO-START) ───────────────────────
 selected = st.session_state.get("selected_mode")
 
 field_map = {
@@ -272,23 +296,29 @@ field_map = {
     "📰 Recent News": "current events trivia"
 }
 
+# ── Category Modes ──────────────────────────────────────────────
 if selected in field_map and not st.session_state.quiz:
-    if start_quiz(field_map[selected], num_questions=4):
-        threading.Thread(
-            target=prefetch_next,
-            args=(field_map[selected], 4, selected_difficulty),
-            daemon=True
-        ).start()
-        st.rerun()
+    topic_name = field_map[selected]
 
-if selected == "custom" and not st.session_state.quiz and "custom_topic" in st.session_state:
-    if start_quiz(st.session_state.custom_topic, num_questions=4):
-        threading.Thread(
-            target=prefetch_next,
-            args=(st.session_state.custom_topic, 4, selected_difficulty),
-            daemon=True
-        ).start()
-        st.rerun()
+    st.markdown("### Choose Mode")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("🚀 Start Quiz", use_container_width=True, key="start_quiz_btn"):
+            if start_quiz(topic_name, num_questions=4, mode="quiz"):
+                threading.Thread(
+                    target=prefetch_next,
+                    args=(topic_name, 4, selected_difficulty),
+                    daemon=True
+                ).start()
+                st.rerun()
+
+    with col2:
+        if st.button("🧠 Start Tutorial", use_container_width=True, key="start_tutorial_btn"):
+            if start_quiz(topic_name, num_questions=6, mode="tutorial"):
+                st.rerun()
+
 
 # ── ADAPTIVE GENERAL KNOWLEDGE MODE ─────────────────────────────
 if selected == "🎯 General Knowledge" and not st.session_state.quiz:
