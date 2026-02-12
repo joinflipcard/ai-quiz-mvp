@@ -34,22 +34,51 @@ st.markdown("""
     padding-top: 1rem;
     padding-bottom: 1rem;
 }
+
 h2, h3 {
     margin-top: 0.6rem;
     margin-bottom: 0.4rem;
 }
+
+/* radio spacing */
 .stRadio > div {
     gap: 6px;
 }
+
+/* ✅ CLEAN LONG ANSWER SUPPORT */
+.stRadio label {
+    white-space: normal !important;     /* allow wrapping */
+    word-break: break-word !important;  /* break long words */
+    overflow-wrap: anywhere !important; /* prevent overflow */
+    line-height: 1.5 !important;        /* better readability */
+    margin-bottom: 4px !important;      /* spacing between options */
+}
+
+/* ensure question text wraps cleanly */
+.quiz-question {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 18px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* buttons */
 .stButton button {
     margin-top: 4px;
+    border-radius: 12px;
+    height: 48px;
 }
+
+/* category buttons */
 .category-btn button {
     height: 70px;
     font-size: 1.05rem;
     border-radius: 14px;
     font-weight: 600;
 }
+
+/* quiz card */
 .quiz-card {
     background: #ffffff;
     padding: 26px;
@@ -57,15 +86,17 @@ h2, h3 {
     box-shadow: 0 6px 16px rgba(0,0,0,.08);
     margin-bottom: 18px;
 }
-.quiz-question {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin-bottom: 18px;
-    line-height: 1.4;
-}
+
+/* feedback */
 .feedback-good  { background:#e9fff3; padding:16px; border-radius:14px; font-weight:600; }
 .feedback-bad   { background:#ffecec; padding:16px; border-radius:14px; font-weight:600; }
-.stButton button { border-radius: 12px; height: 48px; }
+
+/* mobile safety */
+@media (max-width: 640px) {
+    .quiz-card {
+        padding: 18px;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
