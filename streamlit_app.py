@@ -437,6 +437,12 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         if st.session_state.last_correct:
             st.markdown("<div class='feedback-good'>✅ Correct!</div>", unsafe_allow_html=True)
         else:
+    if q.get("correct") is None:
+        st.markdown(
+            "<div class='feedback-bad'>📝 This question is graded based on understanding.</div>",
+            unsafe_allow_html=True
+        )
+        else:
             correct_letter = q.get("correct", "?")
             correct_text = q["choices"].get(correct_letter, "—")
             st.markdown(
