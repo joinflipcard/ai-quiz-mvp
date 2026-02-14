@@ -433,30 +433,34 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
             st.session_state.show_feedback = True
             st.rerun()
 
-    else:
-        if st.session_state.last_correct:
-            st.markdown("<div class='feedback-good'>✅ Correct!</div>", unsafe_allow_html=True)
         else:
-    if q.get("correct") is None:
-        st.markdown(
-            "<div class='feedback-bad'>📝 This question is graded based on understanding.</div>",
-            unsafe_allow_html=True
-        )
-        else:
-            correct_letter = q.get("correct", "?")
-            correct_text = q["choices"].get(correct_letter, "—")
-            st.markdown(
-                f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
-                unsafe_allow_html=True
-            )
+            if st.session_state.last_correct:
+                st.markdown(
+                    "<div class='feedback-good'>✅ Correct!</div>",
+                    unsafe_allow_html=True
+                )
+            else:
+                if q.get("correct") is None:
+                    st.markdown(
+                        "<div class='feedback-bad'>📝 This question is graded based on understanding.</div>",
+                        unsafe_allow_html=True
+                    )
+                else:
+                    correct_letter = q.get("correct", "?")
+                    correct_text = q["choices"].get(correct_letter, "—")
+                    st.markdown(
+                        f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
+                        unsafe_allow_html=True
+                    )
 
-        if st.session_state.last_explanation:
-            st.info(st.session_state.last_explanation)
+            if st.session_state.last_explanation:
+                st.info(st.session_state.last_explanation)
 
-        if st.button("Next question →", use_container_width=True):
-            st.session_state.show_feedback = False
-            st.session_state.index += 1
-            st.rerun()
+            if st.button("Next question →", use_container_width=True):
+                st.session_state.show_feedback = False
+                st.session_state.index += 1
+                st.rerun()
+
 
 # ── ROUND FINISHED ──────────────────────────────────────────────
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
