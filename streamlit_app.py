@@ -375,92 +375,78 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         unsafe_allow_html=True
     )
 
-    if not st.session_state.show_feedback:
-        choices = q.get("choices", {})
-        if not isinstance(choices, dict):
+    choices = q.get("choices", {})
+    if not isinstance(choices, dict):
+        st.session_state.index += 1
+        st.rerun()
+
+    options = [f"{k}. {v}" for k, v in choices.items()]
+
+    selected_answer = st.radio(
+        "Select an answer:",
+        options,
+        index=None,
+        key=f"radio-{st.session_state.index}"
+    )
+
+    # ── SUBMIT ────────────────────────────────────────────────
+    if st.button("Submit answer", use_container_width=True):
+        if not selected_answer:
+            st.warning("Please select an answer first")
+            st.stop()
+
+        letter = selected_answer.split(".", 1)[0].strip().upper()
+        correct_letter = str(q.get("correct", "")).strip().upper()
+        is_correct = (letter == correct_letter)
+
+        try:
+            requests.post(
+                f"{BACKEND}/submit-answer",
+                json={
+                    "user_id": st.session_state.user_id,
+                    "field_id": st.session_state.meta.get("field_id"),
+                    "topic_id": st.session_state.meta.get("topic_id"),
+                    "question_id": q.get("id"),
+                    "question_text": q.get("question"),
+                    "correct": is_correct
+                },
+                timeout=5
+            )
+        except Exception as e:
+            st.error(f"Request failed: {str(e)}")
+
+        st.session_state.total_answered += 1
+        if is_correct:
+            st.session_state.total_correct += 1
+            st.session_state.round_correct += 1
+
+        st.session_state.last_correct = is_correct
+        st.session_state.last_explanation = q.get("explanation", "")
+        st.session_state.show_feedback = True
+        st.rerun()
+
+    # ── FEEDBACK (ONLY AFTER SUBMIT) ─────────────────────────
+    if st.session_state.show_feedback:
+        if st.session_state.last_correct:
+            st.markdown(
+                "<div class='feedback-good'>✅ Correct!</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            correct_letter = q.get("correct", "?")
+            correct_text = q["choices"].get(correct_letter, "—")
+            st.markdown(
+                f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
+                unsafe_allow_html=True
+            )
+
+        if st.session_state.last_explanation:
+            st.info(st.session_state.last_explanation)
+
+        if st.button("Next question →", use_container_width=True):
+            st.session_state.show_feedback = False
             st.session_state.index += 1
             st.rerun()
-
-        options = [f"{k}. {v}" for k, v in choices.items()]
-
-        selected_answer = st.radio(
-            "Select an answer:",
-            options,
-            index=None,
-            key=f"radio-{st.session_state.index}"
-        )
-
-        if st.button("Submit answer", use_container_width=True):
-            if not selected_answer:
-                st.warning("Please select an answer first")
-                st.stop()
-
-            letter = selected_answer.split(".", 1)[0].strip().upper()
-            correct_letter = str(q.get("correct", "")).strip().upper()
-            is_correct = (letter == correct_letter)
-
-            # Debug line
-            st.info(f"Debug: Sending question_id = {q.get('id')} | correct = {is_correct}")
-
-            # Send to backend
-            try:
-                response = requests.post(
-                    f"{BACKEND}/submit-answer",
-                    json={
-                        "user_id": st.session_state.user_id,
-                        "field_id": st.session_state.meta.get("field_id"),
-                        "topic_id": st.session_state.meta.get("topic_id"),
-                        "question_id": q.get("id"),
-                        "question_text": q.get("question"),  # ← REQUIRED FIX
-                        "correct": is_correct
-                    },
-                    timeout=5
-                )
-
-                if response.status_code != 200:
-                    st.error(f"Error from backend: {response.text}")
-
-            except Exception as e:
-                st.error(f"Request failed: {str(e)}")
-
-            st.session_state.total_answered += 1
-            if is_correct:
-                st.session_state.total_correct += 1
-                st.session_state.round_correct += 1
-
-            st.session_state.last_correct = is_correct
-            st.session_state.last_explanation = q.get("explanation", "")
-            st.session_state.show_feedback = True
-            st.rerun()
-
-        else:
-            if st.session_state.last_correct:
-                st.markdown(
-                    "<div class='feedback-good'>✅ Correct!</div>",
-                    unsafe_allow_html=True
-                )
-            else:
-                if q.get("correct") is None:
-                    st.markdown(
-                        "<div class='feedback-bad'>📝 This question is graded based on understanding.</div>",
-                        unsafe_allow_html=True
-                    )
-                else:
-                    correct_letter = q.get("correct", "?")
-                    correct_text = q["choices"].get(correct_letter, "—")
-                    st.markdown(
-                        f"<div class='feedback-bad'>❌ Correct answer: {correct_letter}. {correct_text}</div>",
-                        unsafe_allow_html=True
-                    )
-
-            if st.session_state.last_explanation:
-                st.info(st.session_state.last_explanation)
-
-            if st.button("Next question →", use_container_width=True):
-                st.session_state.show_feedback = False
-                st.session_state.index += 1
-                st.rerun()
-
 
 # ── ROUND FINISHED ──────────────────────────────────────────────
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
