@@ -365,6 +365,40 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
                 daemon=True
             ).start()
             st.rerun()
+            
+# ── CONCEPT CHALLENGE ENTRY POINT ──────────────────────────────
+
+st.markdown("## Concept Challenge")
+
+if st.button("🧠 Concept Challenge", use_container_width=True):
+
+    with st.spinner("Selecting next concept..."):
+        data, err = post(
+            f"{BACKEND}/next-concept",
+            {"user_id": st.session_state.user_id}
+        )
+
+    if err:
+        st.error(f"Failed to load concept: {err}")
+        st.stop()
+
+    if data.get("done"):
+        st.success("🎉 You’ve mastered all available concepts!")
+        st.stop()
+
+    # 🔑 Enter free-text mode
+    st.session_state.free_text_mode = True
+    st.session_state.concept_name = data["concept"]
+    st.session_state.core_idea = data["core_idea"]
+    st.session_state.ideal_explanation = data["ideal_explanation"]
+    st.session_state.concept_difficulty = data["difficulty"]
+
+    # Reset answer + feedback state
+    st.session_state.free_text_answer = ""
+    st.session_state.show_feedback = False
+    st.session_state.is_grading = False
+
+    st.rerun()
 
 # ── FREE-TEXT / VOICE QUESTION MODE ─────────────────────────────
 # This is a standalone mode. It does NOT affect MCQs.
@@ -469,6 +503,7 @@ if st.session_state.get("free_text_mode"):
                 r = requests.post(
                     f"{BACKEND}/check-answer",
                     json={
+                        "user_id": st.session_state.user_id,
                         "concept": concept,
                         "core_idea": core_idea,
                         "ideal_explanation": ideal_explanation,
