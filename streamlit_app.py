@@ -552,9 +552,13 @@ if st.session_state.get("free_text_mode"):
 
         # AUTO-ADVANCE
         if st.button("Next →", use_container_width=True):
-            st.session_state.show_feedback = False
-            st.session_state.free_text_answer = ""
             st.session_state.free_text_mode = False
+
+            # ✅ SAFE RESET: delete widget state instead of assigning
+            if "free_text_answer" in st.session_state:
+                del st.session_state["free_text_answer"]
+
+            st.session_state.show_feedback = False
             st.rerun()
 
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
