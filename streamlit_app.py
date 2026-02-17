@@ -365,7 +365,7 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
                 daemon=True
             ).start()
             st.rerun()
-            
+
 # ── CONCEPT CHALLENGE ENTRY POINT ──────────────────────────────
 
 st.markdown("## Concept Challenge")
@@ -414,7 +414,7 @@ if st.session_state.get("free_text_mode"):
         unsafe_allow_html=True
     )
 
-        st.markdown("### Your answer")
+    st.markdown("### Your answer")
 
     # Voice + Text Input
     st.markdown(
