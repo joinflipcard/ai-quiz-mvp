@@ -366,6 +366,160 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
             ).start()
             st.rerun()
 
+# ── FREE-TEXT / VOICE QUESTION MODE ─────────────────────────────
+# This is a standalone mode. It does NOT affect MCQs.
+
+if st.session_state.get("free_text_mode"):
+
+    concept = st.session_state.get("concept_name", "Concept")
+    core_idea = st.session_state.get("core_idea", "")
+    ideal_explanation = st.session_state.get("ideal_explanation", "")
+
+    st.markdown(
+        f"<div class='quiz-card'><div class='quiz-question'>{concept}</div></div>",
+        unsafe_allow_html=True
+    )
+
+        st.markdown("### Your answer")
+
+    # Voice + Text Input
+    st.markdown(
+        """
+        <button id="mic-btn" style="
+            background:#f2f2f2;
+            border:none;
+            padding:10px 16px;
+            border-radius:12px;
+            font-size:16px;
+            cursor:pointer;
+            margin-bottom:10px;
+        ">
+        🎤 Speak Answer
+        </button>
+
+        <script>
+        const btn = document.getElementById("mic-btn");
+        let recognition;
+
+        btn.onclick = () => {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Speech recognition not supported in this browser.");
+                return;
+            }
+
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = "en-US";
+            recognition.interimResults = true;
+            recognition.continuous = false;
+
+            let finalTranscript = "";
+
+            recognition.onresult = (event) => {
+                let interim = "";
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + " ";
+                    } else {
+                        interim += transcript;
+                    }
+                }
+
+                const textarea = document.querySelector("textarea");
+                if (textarea) {
+                    textarea.value = finalTranscript + interim;
+                    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+            };
+
+            recognition.onerror = (e) => {
+                console.log("Speech error", e);
+            };
+
+            recognition.start();
+        };
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+
+    answer_text = st.text_area(
+        "Explain in your own words:",
+        key="free_text_answer",
+        height=120,
+        placeholder="Type or speak your answer here..."
+    )
+
+    # SUBMIT
+    if st.button("Submit answer", use_container_width=True):
+
+        if not answer_text.strip():
+            st.warning("Please enter an answer first")
+            st.stop()
+
+        st.session_state.is_grading = True
+        st.rerun()
+
+    # GRADING STATE
+    if st.session_state.get("is_grading"):
+
+        with st.spinner("🧠 Evaluating your answer..."):
+
+            try:
+                r = requests.post(
+                    f"{BACKEND}/check-answer",
+                    json={
+                        "concept": concept,
+                        "core_idea": core_idea,
+                        "ideal_explanation": ideal_explanation,
+                        "answer_text": st.session_state.free_text_answer
+                    },
+                    timeout=30
+                )
+                r.raise_for_status()
+                result = r.json()
+
+            except Exception as e:
+                st.error(f"Grading failed: {str(e)}")
+                st.session_state.is_grading = False
+                st.stop()
+
+        # STORE RESULT
+        st.session_state.last_correct = result.get("correct", False)
+        st.session_state.last_explanation = result.get("ideal_explanation", "")
+        st.session_state.last_verdict = result.get("verdict", "")
+        st.session_state.show_feedback = True
+        st.session_state.is_grading = False
+        st.rerun()
+
+    # FEEDBACK
+    if st.session_state.get("show_feedback"):
+
+        if st.session_state.last_correct:
+            st.markdown(
+                "<div class='feedback-good'>✅ Correct</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                "<div class='feedback-bad'>❌ Not quite</div>",
+                unsafe_allow_html=True
+            )
+
+        if st.session_state.last_verdict:
+            st.info(st.session_state.last_verdict)
+
+        if st.session_state.last_explanation:
+            st.markdown("**Ideal explanation:**")
+            st.markdown(st.session_state.last_explanation)
+
+        # AUTO-ADVANCE
+        if st.button("Next →", use_container_width=True):
+            st.session_state.show_feedback = False
+            st.session_state.free_text_answer = ""
+            st.session_state.free_text_mode = False
+            st.rerun()
+
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
 if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
     q = st.session_state.quiz[st.session_state.index]
