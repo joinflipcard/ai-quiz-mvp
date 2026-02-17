@@ -388,6 +388,7 @@ if st.button("🧠 Concept Challenge", use_container_width=True):
 
     # 🔑 Enter free-text mode
     st.session_state.free_text_mode = True
+    st.session_state.concept_id = data["concept_id"]
     st.session_state.concept_name = data["concept"]
     st.session_state.core_idea = data["core_idea"]
     st.session_state.ideal_explanation = data["ideal_explanation"]
@@ -504,6 +505,7 @@ if st.session_state.get("free_text_mode"):
                     f"{BACKEND}/check-answer",
                     json={
                         "user_id": st.session_state.user_id,
+                        "concept_id": st.session_state.concept_id,
                         "concept": concept,
                         "core_idea": core_idea,
                         "ideal_explanation": ideal_explanation,
