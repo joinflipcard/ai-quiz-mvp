@@ -462,8 +462,9 @@ if st.button("🧠 Concept Challenge", use_container_width=True):
 
     st.rerun()
 
-# ── FREE-TEXT / VOICE QUESTION MODE ─────────────────────────────
-# This is a standalone mode. It does NOT affect MCQs.
+
+# ── FREE-TEXT QUESTION MODE ────────────────────────────────────
+# Uses native keyboard dictation on iOS (no custom mic needed)
 
 if st.session_state.get("free_text_mode"):
 
@@ -478,77 +479,15 @@ if st.session_state.get("free_text_mode"):
 
     st.markdown("### Your answer")
 
-    # Voice + Text Input
-    st.markdown(
-        """
-        <button id="mic-btn" style="
-            background:#f2f2f2;
-            border:none;
-            padding:10px 16px;
-            border-radius:12px;
-            font-size:16px;
-            cursor:pointer;
-            margin-bottom:10px;
-        ">
-        🎤 Speak Answer
-        </button>
-
-        <script>
-        const btn = document.getElementById("mic-btn");
-        let recognition;
-
-        btn.onclick = () => {
-            if (!('webkitSpeechRecognition' in window)) {
-                alert("Speech recognition not supported in this browser.");
-                return;
-            }
-
-            recognition = new webkitSpeechRecognition();
-            recognition.lang = "en-US";
-            recognition.interimResults = true;
-            recognition.continuous = false;
-
-            let finalTranscript = "";
-
-            recognition.onresult = (event) => {
-                let interim = "";
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        finalTranscript += transcript + " ";
-                    } else {
-                        interim += transcript;
-                    }
-                }
-
-                const textarea = document.querySelector("textarea");
-                if (textarea) {
-                    textarea.value = finalTranscript + interim;
-                    textarea.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-            };
-
-            recognition.onerror = (e) => {
-                console.log("Speech error", e);
-            };
-
-            recognition.start();
-        };
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
-
     answer_text = st.text_area(
         "Explain in your own words:",
         key="free_text_answer",
-        height=120,
-        placeholder="Type or speak your answer here..."
+        height=140,
+        placeholder="Type your answer or use the keyboard mic to speak…"
     )
 
     # SUBMIT
-    if st.button("Submit answer", use_container_width=True):
-
+    if st.button("Submit answer", use_container_width=True, key="submit_concept"):
         if not answer_text.strip():
             st.warning("Please enter an answer first")
             st.stop()
@@ -560,7 +499,6 @@ if st.session_state.get("free_text_mode"):
     if st.session_state.get("is_grading"):
 
         with st.spinner("🧠 Evaluating your answer..."):
-
             try:
                 r = requests.post(
                     f"{BACKEND}/check-answer",
@@ -594,15 +532,9 @@ if st.session_state.get("free_text_mode"):
     if st.session_state.get("show_feedback"):
 
         if st.session_state.last_correct:
-            st.markdown(
-                "<div class='feedback-good'>✅ Correct</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown("<div class='feedback-good'>✅ Correct</div>", unsafe_allow_html=True)
         else:
-            st.markdown(
-                "<div class='feedback-bad'>❌ Not quite</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown("<div class='feedback-bad'>❌ Not quite</div>", unsafe_allow_html=True)
 
         if st.session_state.last_verdict:
             st.info(st.session_state.last_verdict)
@@ -611,16 +543,16 @@ if st.session_state.get("free_text_mode"):
             st.markdown("**Ideal explanation:**")
             st.markdown(st.session_state.last_explanation)
 
-        # AUTO-ADVANCE
-        if st.button("Next →", use_container_width=True):
+        # EXIT CONCEPT MODE
+        if st.button("Next →", use_container_width=True, key="next_concept"):
             st.session_state.free_text_mode = False
 
-            # ✅ SAFE RESET: delete widget state instead of assigning
             if "free_text_answer" in st.session_state:
                 del st.session_state["free_text_answer"]
 
             st.session_state.show_feedback = False
             st.rerun()
+
 
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
 # 🚫 IMPORTANT: Do NOT render MCQs while in Concept Challenge mode
