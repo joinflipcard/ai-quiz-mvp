@@ -564,8 +564,13 @@ if (
 ):
     q = st.session_state.quiz[st.session_state.index]
 
+    # Question card
     st.markdown(
-        f"<div class='quiz-card'><div class='quiz-question'>{q.get('question', '—')}</div></div>",
+        f"""
+        <div class='quiz-card'>
+            <div class='quiz-question'>{q.get("question", "—")}</div>
+        </div>
+        """,
         unsafe_allow_html=True
     )
 
@@ -574,16 +579,45 @@ if (
         st.session_state.index += 1
         st.rerun()
 
-    options = [f"{k}. {v}" for k, v in choices.items()]
+    # Prepare options
+    option_items = [(k, v) for k, v in choices.items()]
+    option_labels = [f"{k}. {v}" for k, v in option_items]
 
-    selected_answer = st.radio(
-        "Select an answer:",
-        options,
-        index=None,
-        key=f"radio-{st.session_state.index}"
-    )
+    # Keep answers compact: split into two columns when possible
+    if len(option_labels) >= 4:
+        col1, col2 = st.columns(2)
+        with col1:
+            left_opts = option_labels[: len(option_labels) // 2]
+            left_choice = st.radio(
+                " ",
+                left_opts,
+                index=None,
+                key=f"radio_left_{st.session_state.index}"
+            )
+        with col2:
+            right_opts = option_labels[len(option_labels) // 2 :]
+            right_choice = st.radio(
+                "  ",
+                right_opts,
+                index=None,
+                key=f"radio_right_{st.session_state.index}"
+            )
 
-    if st.button("Submit answer", use_container_width=True, key=f"submit_quiz_{st.session_state.index}"):
+        selected_answer = left_choice or right_choice
+    else:
+        selected_answer = st.radio(
+            "Select an answer:",
+            option_labels,
+            index=None,
+            key=f"radio_{st.session_state.index}"
+        )
+
+    # Submit
+    if st.button(
+        "Submit answer",
+        use_container_width=True,
+        key=f"submit_quiz_{st.session_state.index}"
+    ):
         if not selected_answer:
             st.warning("Please select an answer first")
             st.stop()
@@ -618,6 +652,7 @@ if (
         st.session_state.show_feedback = True
         st.rerun()
 
+    # Feedback
     if st.session_state.show_feedback:
         if st.session_state.last_correct:
             st.markdown("<div class='feedback-good'>✅ Correct!</div>", unsafe_allow_html=True)
@@ -632,7 +667,11 @@ if (
         if st.session_state.last_explanation:
             st.info(st.session_state.last_explanation)
 
-        if st.button("Next question →", use_container_width=True, key=f"next_quiz_{st.session_state.index}"):
+        if st.button(
+            "Next question →",
+            use_container_width=True,
+            key=f"next_quiz_{st.session_state.index}"
+        ):
             st.session_state.show_feedback = False
             st.session_state.index += 1
             st.rerun()
