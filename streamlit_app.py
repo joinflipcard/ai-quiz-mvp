@@ -372,6 +372,11 @@ st.markdown("## Concept Challenge")
 
 if st.button("🧠 Concept Challenge", use_container_width=True):
 
+    # 🔒 HARD RESET: ensure MCQ quiz cannot render alongside concept mode
+    st.session_state.quiz = []
+    st.session_state.index = 0
+    st.session_state.show_feedback = False
+
     with st.spinner("Selecting next concept..."):
         data, err = post(
             f"{BACKEND}/next-concept",
@@ -386,7 +391,7 @@ if st.button("🧠 Concept Challenge", use_container_width=True):
         st.success("🎉 You’ve mastered all available concepts!")
         st.stop()
 
-    # 🔑 Enter free-text mode
+    # 🔑 Enter free-text (concept) mode ONLY
     st.session_state.free_text_mode = True
     st.session_state.concept_id = data["concept_id"]
     st.session_state.concept_name = data["concept"]
@@ -394,10 +399,10 @@ if st.button("🧠 Concept Challenge", use_container_width=True):
     st.session_state.ideal_explanation = data["ideal_explanation"]
     st.session_state.concept_difficulty = data["difficulty"]
 
-    # Reset answer + feedback state
+    # Reset free-text state
     st.session_state.free_text_answer = ""
-    st.session_state.show_feedback = False
     st.session_state.is_grading = False
+    st.session_state.show_feedback = False
 
     st.rerun()
 
