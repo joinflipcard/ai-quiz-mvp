@@ -189,12 +189,25 @@ def prefetch_next(topic, num_questions, difficulty):
             "topic": topic,
             "start_difficulty": difficulty,
             "num_questions": num_questions,
-            "user_id": st.session_state.user_id   # ← added here
+            "user_id": st.session_state.user_id
         }
     )
     if err or not quiz_data or "questions" not in quiz_data:
         return
     st.session_state.next_quiz = quiz_data["questions"]
+
+
+# ── MODE EXIT HELPERS ───────────────────────────────────────────
+# Ensures Concept Challenge does NOT block quizzes
+
+def exit_concept_mode():
+    st.session_state.free_text_mode = False
+    st.session_state.is_grading = False
+    st.session_state.show_feedback = False
+
+    # Remove lingering widget state
+    if "free_text_answer" in st.session_state:
+        del st.session_state["free_text_answer"]
 
 # ── START QUIZ FUNCTION ─────────────────────────────────────────
 def start_quiz(topic, difficulty, num_questions=4, is_adaptive=False, mode="quiz"):
