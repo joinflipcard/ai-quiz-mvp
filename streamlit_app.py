@@ -360,7 +360,13 @@ field_map = {
 }
 
 # ── Category Modes ──────────────────────────────────────────────
-if selected in field_map and not st.session_state.quiz:
+# User explicitly chooses Quiz or Tutorial
+
+if (
+    selected in field_map
+    and not st.session_state.quiz
+    and not st.session_state.get("free_text_mode")
+):
     topic_name = field_map[selected]
 
     st.markdown("### Choose Mode")
@@ -369,6 +375,7 @@ if selected in field_map and not st.session_state.quiz:
 
     with col1:
         if st.button("🚀 Start Quiz", use_container_width=True, key="start_quiz_btn"):
+            exit_concept_mode()
             if start_quiz(topic_name, selected_difficulty, num_questions=4, mode="quiz"):
                 threading.Thread(
                     target=prefetch_next,
@@ -379,11 +386,18 @@ if selected in field_map and not st.session_state.quiz:
 
     with col2:
         if st.button("🧠 Start Tutorial", use_container_width=True, key="start_tutorial_btn"):
+            exit_concept_mode()
             if start_quiz(topic_name, selected_difficulty, num_questions=6, mode="tutorial"):
                 st.rerun()
 
 # ── ADAPTIVE GENERAL KNOWLEDGE MODE ─────────────────────────────
-if selected == "🎯 General Knowledge" and not st.session_state.quiz:
+# Auto-select next topic ONLY when not in concept mode
+
+if (
+    selected == "🎯 General Knowledge"
+    and not st.session_state.quiz
+    and not st.session_state.get("free_text_mode")
+):
     data, err = post(
         f"{BACKEND}/next-topic",
         {"user_id": st.session_state.user_id}
@@ -393,7 +407,14 @@ if selected == "🎯 General Knowledge" and not st.session_state.quiz:
         st.error("Could not load next topic")
     else:
         st.session_state.meta = data
-        if start_quiz(data["topic"], data.get("start_difficulty", selected_difficulty), num_questions=3, is_adaptive=True):
+        exit_concept_mode()
+
+        if start_quiz(
+            data["topic"],
+            data.get("start_difficulty", selected_difficulty),
+            num_questions=3,
+            is_adaptive=True
+        ):
             threading.Thread(
                 target=prefetch_next,
                 args=(data["topic"], 3, data.get("start_difficulty", selected_difficulty)),
