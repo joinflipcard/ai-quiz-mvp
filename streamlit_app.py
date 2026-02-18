@@ -272,6 +272,7 @@ def select_mode(mode):
     st.session_state.show_feedback = False
     st.session_state.round_correct = 0
 
+
 # ⭐ Custom topic (explicit start — no auto-trigger)
 custom_topic_input = st.text_input(
     "Choose your own topic",
@@ -286,17 +287,32 @@ if custom_topic_input.strip():
 
     with col1:
         if st.button("🚀 Start Quiz", use_container_width=True, key="custom_quiz_start"):
+            exit_concept_mode()
             select_mode("custom")
             st.session_state.custom_topic = custom_topic_input.strip()
-            if start_quiz(st.session_state.custom_topic, selected_difficulty, num_questions=4, mode="quiz"):
+
+            if start_quiz(
+                st.session_state.custom_topic,
+                selected_difficulty,
+                num_questions=4,
+                mode="quiz"
+            ):
                 st.rerun()
 
     with col2:
         if st.button("🧠 Start Tutorial", use_container_width=True, key="custom_tutorial_start"):
+            exit_concept_mode()
             select_mode("custom")
             st.session_state.custom_topic = custom_topic_input.strip()
-            if start_quiz(st.session_state.custom_topic, selected_difficulty, num_questions=6, mode="tutorial"):
+
+            if start_quiz(
+                st.session_state.custom_topic,
+                selected_difficulty,
+                num_questions=6,
+                mode="tutorial"
+            ):
                 st.rerun()
+
 st.markdown("---")
 
 # Categories in compact 3x2 grid
@@ -304,23 +320,29 @@ cols = st.columns(3)
 
 with cols[0]:
     if st.button("🎯 General Knowledge", key="cat-general", use_container_width=True):
+        exit_concept_mode()
         select_mode("🎯 General Knowledge")
 
     if st.button("🏀 Sports", key="cat-sports", use_container_width=True):
+        exit_concept_mode()
         select_mode("🏀 Sports")
 
 with cols[1]:
     if st.button("🧪 Science", key="cat-science", use_container_width=True):
+        exit_concept_mode()
         select_mode("🧪 Science")
 
     if st.button("🎬 Entertainment", key="cat-entertainment", use_container_width=True):
+        exit_concept_mode()
         select_mode("🎬 Entertainment")
 
 with cols[2]:
     if st.button("📜 History", key="cat-history", use_container_width=True):
+        exit_concept_mode()
         select_mode("📜 History")
 
     if st.button("🌍 Geography", key="cat-geo", use_container_width=True):
+        exit_concept_mode()
         select_mode("🌍 Geography")
 
 st.divider()
