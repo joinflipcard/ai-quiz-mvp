@@ -562,7 +562,13 @@ if st.session_state.get("free_text_mode"):
             st.rerun()
 
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
-if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz):
+# 🚫 IMPORTANT: Do NOT render MCQs while in Concept Challenge mode
+
+if (
+    not st.session_state.get("free_text_mode")
+    and st.session_state.quiz
+    and st.session_state.index < len(st.session_state.quiz)
+):
     q = st.session_state.quiz[st.session_state.index]
 
     st.markdown(
@@ -584,8 +590,7 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         key=f"radio-{st.session_state.index}"
     )
 
-    # ── SUBMIT ────────────────────────────────────────────────
-    if st.button("Submit answer", use_container_width=True):
+    if st.button("Submit answer", use_container_width=True, key=f"submit_quiz_{st.session_state.index}"):
         if not selected_answer:
             st.warning("Please select an answer first")
             st.stop()
@@ -620,13 +625,9 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         st.session_state.show_feedback = True
         st.rerun()
 
-    # ── FEEDBACK (ONLY AFTER SUBMIT) ─────────────────────────
     if st.session_state.show_feedback:
         if st.session_state.last_correct:
-            st.markdown(
-                "<div class='feedback-good'>✅ Correct!</div>",
-                unsafe_allow_html=True
-            )
+            st.markdown("<div class='feedback-good'>✅ Correct!</div>", unsafe_allow_html=True)
         else:
             correct_letter = q.get("correct", "?")
             correct_text = q["choices"].get(correct_letter, "—")
@@ -638,10 +639,11 @@ if st.session_state.quiz and st.session_state.index < len(st.session_state.quiz)
         if st.session_state.last_explanation:
             st.info(st.session_state.last_explanation)
 
-        if st.button("Next question →", use_container_width=True):
+        if st.button("Next question →", use_container_width=True, key=f"next_quiz_{st.session_state.index}"):
             st.session_state.show_feedback = False
             st.session_state.index += 1
             st.rerun()
+
 
 # ── ROUND FINISHED ──────────────────────────────────────────────
 if st.session_state.quiz and st.session_state.index >= len(st.session_state.quiz):
