@@ -247,36 +247,30 @@ if (
 
     end_main_card()
 
-
-# ── PRIMARY SELECTION BAR (HORIZONTAL, CLEAN) ──────────────────
-# All entry paths live here. No duplicate CTAs elsewhere.
-
-# ── Scoped blue button styling (EXTENSION STYLE, SAFE) ─────────
+# ── PRIMARY BUTTON STYLE (EXTENSION BLUE – STREAMLIT SAFE) ─────
 st.markdown(
     """
     <style>
-    /* ONLY buttons inside the primary selection bar */
-    .primary-select-bar .stButton > button {
+    .stButton > button {
         background-color: #2F5FA4;  /* extension blue */
         color: white;
         border: none;
         border-radius: 14px;
         height: 48px;
         font-weight: 600;
-        transition: background-color 0.15s ease;
+        transition: background-color 0.15s ease, transform 0.05s ease;
     }
 
-    .primary-select-bar .stButton > button:hover {
+    .stButton > button:hover {
         background-color: #274F88;
         color: white;
     }
 
-    .primary-select-bar .stButton > button:active {
+    .stButton > button:active {
         background-color: #1F3F6E;
+        transform: translateY(1px);
     }
     </style>
-
-    <div class="primary-select-bar">
     """,
     unsafe_allow_html=True
 )
