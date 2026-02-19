@@ -535,40 +535,72 @@ if st.session_state.get("free_text_mode"):
         st.rerun()
 
         # FEEDBACK
-        if st.session_state.get("show_feedback"):
+if st.session_state.get("show_feedback"):
 
-            if st.session_state.last_correct:
-                st.markdown("<div class='feedback-good'>✅ Correct</div>", unsafe_allow_html=True)
-            else:
-                st.markdown("<div class='feedback-bad'>❌ Not quite</div>", unsafe_allow_html=True)
+    if st.session_state.last_correct:
+        st.markdown("<div class='feedback-good'>✅ Correct</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("<div class='feedback-bad'>❌ Not quite</div>", unsafe_allow_html=True)
 
-            if st.session_state.last_verdict:
-                st.info(st.session_state.last_verdict)
+    if st.session_state.last_verdict:
+        st.info(st.session_state.last_verdict)
 
-            if st.session_state.last_explanation:
-                st.markdown("**Ideal explanation:**")
-                st.markdown(st.session_state.last_explanation)
+    if st.session_state.last_explanation:
+        st.markdown("**Ideal explanation:**")
+        st.markdown(st.session_state.last_explanation)
 
-            # 👉 Explain more simply CTA
-            if st.button(
-                "Explain this more simply",
-                use_container_width=True,
-                key="explain_more_btn"
-            ):
-                st.session_state.is_simplifying = True
-                st.session_state.show_simple_explanation = False
-                st.rerun()
+    # 👉 Explain more simply CTA
+    if st.button(
+        "Explain this more simply",
+        use_container_width=True,
+        key="explain_more_btn"
+    ):
+        st.session_state.is_simplifying = True
+        st.session_state.show_simple_explanation = False
 
-            # EXIT CONCEPT MODE
-            if st.button("Next →", use_container_width=True, key="next_concept"):
-                st.session_state.free_text_mode = False
-                st.session_state.show_simple_explanation = False
+    # EXIT CONCEPT MODE
+    if st.button("Next →", use_container_width=True, key="next_concept"):
+        st.session_state.free_text_mode = False
+        st.session_state.show_simple_explanation = False
+        st.session_state.is_simplifying = False
 
-                if "free_text_answer" in st.session_state:
-                    del st.session_state["free_text_answer"]
+        if "free_text_answer" in st.session_state:
+            del st.session_state["free_text_answer"]
 
-                st.session_state.show_feedback = False
-                st.rerun()
+        st.session_state.show_feedback = False
+        st.rerun()
+
+
+# ── SIMPLER EXPLANATION FLOW ───────────────────────────
+if st.session_state.get("is_simplifying"):
+
+    with st.spinner("Breaking it down more simply..."):
+        try:
+            r = requests.post(
+                f"{BACKEND}/explain-better",
+                json={
+                    "concept": st.session_state.concept_name,
+                    "core_idea": st.session_state.core_idea,
+                    "ideal_explanation": st.session_state.ideal_explanation,
+                    "difficulty": st.session_state.concept_difficulty
+                },
+                timeout=30
+            )
+            r.raise_for_status()
+            data = r.json()
+
+            st.session_state.simple_explanation = data.get("simple_explanation", "")
+            st.session_state.show_simple_explanation = True
+            st.session_state.is_simplifying = False
+
+        except Exception as e:
+            st.error(f"Could not simplify explanation: {str(e)}")
+            st.session_state.is_simplifying = False
+
+
+if st.session_state.get("show_simple_explanation"):
+    st.markdown("### Simpler explanation")
+    st.success(st.session_state.simple_explanation)
 
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
 # 🚫 IMPORTANT: Do NOT render MCQs while in Concept Challenge mode
