@@ -413,8 +413,8 @@ def select_mode(mode):
 # ⭐ Custom topic (explicit start — no auto-trigger)
 custom_topic_input = st.text_input(
     "Choose your own topic",
-    placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…",
-    key="custom_topic_input"
+    placeholder="e.g. World Cup history, neuroscience, LeBron James…",
+    key="custom_topic_input_main"
 )
 
 if custom_topic_input.strip():
