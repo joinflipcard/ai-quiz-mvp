@@ -27,74 +27,98 @@ st.markdown(
 
 BACKEND = "https://quiz.peterrazeghi.workers.dev"
 
-# ── Basic styling ───────────────────────────────────────────────
+# ── BASIC STYLING (POLISHED) ─────────────────────────────────────
 st.markdown("""
 <style>
+/* page spacing */
 .block-container {
     padding-top: 1rem;
     padding-bottom: 1rem;
 }
 
+/* headings */
 h2, h3 {
     margin-top: 0.6rem;
     margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+
+/* question text */
+.quiz-question {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    line-height: 1.45;
+    word-break: break-word;
 }
 
 /* radio spacing */
 .stRadio > div {
-    gap: 6px;
+    gap: 8px;
 }
 
-/* ✅ CLEAN LONG ANSWER SUPPORT */
+/* allow long answers to wrap cleanly */
 .stRadio label {
-    white-space: normal !important;     /* allow wrapping */
-    word-break: break-word !important;  /* break long words */
-    overflow-wrap: anywhere !important; /* prevent overflow */
-    line-height: 1.5 !important;        /* better readability */
-    margin-bottom: 4px !important;      /* spacing between options */
-}
-
-/* ensure question text wraps cleanly */
-.quiz-question {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin-bottom: 18px;
-    line-height: 1.4;
-    word-break: break-word;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+    line-height: 1.5 !important;
+    margin-bottom: 6px !important;
 }
 
 /* buttons */
 .stButton button {
-    margin-top: 4px;
-    border-radius: 12px;
-    height: 48px;
-}
-
-/* category buttons */
-.category-btn button {
-    height: 70px;
-    font-size: 1.05rem;
+    margin-top: 6px;
     border-radius: 14px;
+    height: 48px;
     font-weight: 600;
 }
 
-/* quiz card */
-.quiz-card {
+/* primary card */
+.main-card {
     background: #ffffff;
     padding: 26px;
-    border-radius: 18px;
-    box-shadow: 0 6px 16px rgba(0,0,0,.08);
-    margin-bottom: 18px;
+    border-radius: 20px;
+    box-shadow: 0 8px 22px rgba(0,0,0,.08);
+    margin-bottom: 20px;
 }
 
-/* feedback */
-.feedback-good  { background:#e9fff3; padding:16px; border-radius:14px; font-weight:600; }
-.feedback-bad   { background:#ffecec; padding:16px; border-radius:14px; font-weight:600; }
+/* feedback blocks */
+.feedback-good {
+    background: #e9fff3;
+    padding: 16px;
+    border-radius: 14px;
+    font-weight: 600;
+    margin-top: 16px;
+}
+
+.feedback-bad {
+    background: #ffecec;
+    padding: 16px;
+    border-radius: 14px;
+    font-weight: 600;
+    margin-top: 16px;
+}
+
+/* info explanation spacing */
+.stAlert {
+    margin-top: 14px;
+}
+
+/* reduce emoji visual weight */
+.feedback-good,
+.feedback-bad {
+    letter-spacing: 0.2px;
+}
 
 /* mobile safety */
 @media (max-width: 640px) {
-    .quiz-card {
-        padding: 18px;
+    .quiz-question {
+        font-size: 1.25rem;
+    }
+
+    .stButton button {
+        height: 46px;
     }
 }
 </style>
