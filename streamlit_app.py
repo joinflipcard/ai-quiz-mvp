@@ -575,18 +575,41 @@ if st.button("🧠 Concept Challenge", use_container_width=True):
 
     st.rerun()
 
+# ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
+# Ensures questions, answers, feedback always render in one place
+
+def begin_main_card():
+    st.markdown(
+        """
+        <div style="
+            background:#ffffff;
+            padding:24px;
+            border-radius:18px;
+            box-shadow:0 6px 18px rgba(0,0,0,.08);
+            margin-top:18px;
+            margin-bottom:18px;
+        ">
+        """,
+        unsafe_allow_html=True
+    )
+
+def end_main_card():
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ── FREE-TEXT QUESTION MODE ────────────────────────────────────
 # Uses native keyboard dictation on iOS (no custom mic needed)
 
 if st.session_state.get("free_text_mode"):
 
+    begin_main_card()
+
     concept = st.session_state.get("concept_name", "Concept")
     core_idea = st.session_state.get("core_idea", "")
     ideal_explanation = st.session_state.get("ideal_explanation", "")
 
+    # ── CONCEPT PROMPT ─────────────────────────────
     st.markdown(
-        f"<div class='quiz-card'><div class='quiz-question'>{concept}</div></div>",
+        f"<div class='quiz-question'>{concept}</div>",
         unsafe_allow_html=True
     )
 
@@ -599,13 +622,12 @@ if st.session_state.get("free_text_mode"):
         placeholder="Type your answer or use the keyboard mic to speak…"
     )
 
-    # SUBMIT
+    # ── SUBMIT (allow blank) ───────────────────────
     if st.button("Submit answer", use_container_width=True, key="submit_concept"):
-        # Allow blank submission (user just wants explanation)
         st.session_state.is_grading = True
         st.rerun()
 
-    # GRADING STATE
+    # ── GRADING STATE ──────────────────────────────
     if st.session_state.get("is_grading"):
 
         with st.spinner("🧠 Evaluating your answer..."):
@@ -633,10 +655,10 @@ if st.session_state.get("free_text_mode"):
             except Exception as e:
                 st.error(f"Grading failed: {str(e)}")
                 st.session_state.is_grading = False
+                end_main_card()
                 st.stop()
 
-
-        # STORE RESULT
+        # ── STORE RESULT ───────────────────────────
         st.session_state.last_correct = result.get("correct", False)
         st.session_state.last_explanation = result.get("ideal_explanation", "")
         st.session_state.last_verdict = result.get("verdict", "")
@@ -644,73 +666,74 @@ if st.session_state.get("free_text_mode"):
         st.session_state.is_grading = False
         st.rerun()
 
-        # FEEDBACK
-if st.session_state.get("show_feedback"):
+    # ── FEEDBACK ──────────────────────────────────
+    if st.session_state.get("show_feedback"):
 
-    if st.session_state.last_correct:
-        st.markdown("<div class='feedback-good'>✅ Correct</div>", unsafe_allow_html=True)
-    else:
-        st.markdown("<div class='feedback-bad'>❌ Not quite</div>", unsafe_allow_html=True)
+        if st.session_state.last_correct:
+            st.markdown("<div class='feedback-good'>✅ Correct</div>", unsafe_allow_html=True)
+        else:
+            st.markdown("<div class='feedback-bad'>❌ Not quite</div>", unsafe_allow_html=True)
 
-    if st.session_state.last_verdict:
-        st.info(st.session_state.last_verdict)
+        if st.session_state.last_verdict:
+            st.info(st.session_state.last_verdict)
 
-    if st.session_state.last_explanation:
-        st.markdown("**Ideal explanation:**")
-        st.markdown(st.session_state.last_explanation)
+        if st.session_state.last_explanation:
+            st.markdown("**Ideal explanation:**")
+            st.markdown(st.session_state.last_explanation)
 
-    # 👉 Explain more simply CTA
-    if st.button(
-        "Explain this more simply",
-        use_container_width=True,
-        key="explain_more_btn"
-    ):
-        st.session_state.is_simplifying = True
-        st.session_state.show_simple_explanation = False
+        # 👉 Explain more simply
+        if st.button(
+            "Explain this more simply",
+            use_container_width=True,
+            key="explain_more_btn"
+        ):
+            st.session_state.is_simplifying = True
+            st.session_state.show_simple_explanation = False
 
-    # EXIT CONCEPT MODE
-    if st.button("Next →", use_container_width=True, key="next_concept"):
-        st.session_state.free_text_mode = False
-        st.session_state.show_simple_explanation = False
-        st.session_state.is_simplifying = False
-
-        if "free_text_answer" in st.session_state:
-            del st.session_state["free_text_answer"]
-
-        st.session_state.show_feedback = False
-        st.rerun()
-
-
-# ── SIMPLER EXPLANATION FLOW ───────────────────────────
-if st.session_state.get("is_simplifying"):
-
-    with st.spinner("Breaking it down more simply..."):
-        try:
-            r = requests.post(
-                f"{BACKEND}/explain-better",
-                json={
-                    "concept": st.session_state.concept_name,
-                    "core_idea": st.session_state.core_idea,
-                    "ideal_explanation": st.session_state.ideal_explanation,
-                    "difficulty": st.session_state.concept_difficulty
-                },
-                timeout=30
-            )
-            r.raise_for_status()
-            data = r.json()
-
-            st.session_state.simple_explanation = data.get("simple_explanation", "")
-            st.session_state.show_simple_explanation = True
+        # EXIT CONCEPT MODE
+        if st.button("Next →", use_container_width=True, key="next_concept"):
+            st.session_state.free_text_mode = False
+            st.session_state.show_simple_explanation = False
             st.session_state.is_simplifying = False
 
-        except Exception as e:
-            st.error(f"Could not simplify explanation: {str(e)}")
-            st.session_state.is_simplifying = False
+            if "free_text_answer" in st.session_state:
+                del st.session_state["free_text_answer"]
 
+            st.session_state.show_feedback = False
+            st.rerun()
 
-if st.session_state.get("show_simple_explanation"):
-    st.markdown("### Simpler explanation")
-    st.success(st.session_state.simple_explanation)
+    # ── SIMPLER EXPLANATION FLOW ───────────────────
+    if st.session_state.get("is_simplifying"):
+
+        with st.spinner("Breaking it down more simply..."):
+            try:
+                r = requests.post(
+                    f"{BACKEND}/explain-better",
+                    json={
+                        "concept": st.session_state.concept_name,
+                        "core_idea": st.session_state.core_idea,
+                        "ideal_explanation": st.session_state.ideal_explanation,
+                        "difficulty": st.session_state.concept_difficulty
+                    },
+                    timeout=30
+                )
+                r.raise_for_status()
+                data = r.json()
+
+                st.session_state.simple_explanation = data.get("simple_explanation", "")
+                st.session_state.show_simple_explanation = True
+                st.session_state.is_simplifying = False
+
+            except Exception as e:
+                st.error(f"Could not simplify explanation: {str(e)}")
+                st.session_state.is_simplifying = False
+
+    if st.session_state.get("show_simple_explanation"):
+        st.markdown("### Simpler explanation")
+        st.success(st.session_state.simple_explanation)
+
+    end_main_card()
+
 
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
 # 🚫 IMPORTANT: Do NOT render MCQs while in Concept Challenge mode
