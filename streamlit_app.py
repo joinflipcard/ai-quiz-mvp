@@ -231,6 +231,38 @@ with cols[4]:
 with cols[5]:
     if st.button("Concepts", use_container_width=True):
         select_mode("concept")
+        
+# ── USER DEFAULT TOGGLES (MODE + DIFFICULTY) ────────────────────
+# Persistent, lightweight, no re-click required
+
+if "user_mode" not in st.session_state:
+    st.session_state.user_mode = "quiz"   # quiz | tutorial
+
+if "user_difficulty" not in st.session_state:
+    st.session_state.user_difficulty = "medium"  # easy | medium | hard
+
+
+toggle_cols = st.columns([1, 1, 4])
+
+with toggle_cols[0]:
+    mode_choice = st.radio(
+        "Mode",
+        ["Quiz", "Tutorial"],
+        horizontal=True,
+        index=0 if st.session_state.user_mode == "quiz" else 1,
+        key="mode_toggle"
+    )
+    st.session_state.user_mode = mode_choice.lower()
+
+with toggle_cols[1]:
+    diff_choice = st.radio(
+        "Difficulty",
+        ["Easy", "Medium", "Hard"],
+        horizontal=True,
+        index=["easy", "medium", "hard"].index(st.session_state.user_difficulty),
+        key="difficulty_toggle"
+    )
+    st.session_state.user_difficulty = diff_choice.lower()
 
 # ── STATE INITIALIZATION ────────────────────────────────────────
 defaults = {
