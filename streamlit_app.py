@@ -124,26 +124,6 @@ h2, h3 {
 </style>
 """, unsafe_allow_html=True)
 
-# ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
-# Single place where questions / placeholder / answers render
-
-def begin_main_card():
-    st.markdown(
-        """
-        <div style="
-            background:#ffffff;
-            padding:24px;
-            border-radius:18px;
-            box-shadow:0 6px 18px rgba(0,0,0,.08);
-            margin-top:18px;
-            margin-bottom:18px;
-        ">
-        """,
-        unsafe_allow_html=True
-    )
-
-def end_main_card():
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # ── LOGIN ───────────────────────────────────────────────────────
 if "user_id" not in st.session_state:
@@ -569,7 +549,7 @@ if st.session_state.get("selected_mode") == "concept":
     end_main_card()
 
 # ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
-# Ensures questions, answers, feedback always render in one place
+# Single place where questions / placeholder / answers render
 
 def begin_main_card():
     st.markdown(
@@ -577,8 +557,9 @@ def begin_main_card():
         <div style="
             background:#ffffff;
             padding:24px;
-            border-radius:18px;
-            box-shadow:0 6px 18px rgba(0,0,0,.08);
+            border-radius:14px;
+            border:1px solid #e6e9ef;
+            box-shadow:0 4px 10px rgba(0,0,0,.05);
             margin-top:18px;
             margin-bottom:18px;
         ">
