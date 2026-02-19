@@ -743,30 +743,30 @@ if (
     and st.session_state.quiz
     and st.session_state.index < len(st.session_state.quiz)
 ):
+
+    begin_main_card()
+
     q = st.session_state.quiz[st.session_state.index]
 
-    # Question card
+    # ── QUESTION ─────────────────────────────
     st.markdown(
-        f"""
-        <div class='quiz-card'>
-            <div class='quiz-question'>{q.get("question", "—")}</div>
-        </div>
-        """,
+        f"<div class='quiz-question'>{q.get('question', '—')}</div>",
         unsafe_allow_html=True
     )
 
     choices = q.get("choices", {})
     if not isinstance(choices, dict):
+        end_main_card()
         st.session_state.index += 1
         st.rerun()
 
-    # Prepare options
     option_items = [(k, v) for k, v in choices.items()]
     option_labels = [f"{k}. {v}" for k, v in option_items]
 
-    # Keep answers compact: split into two columns when possible
+    # ── ANSWER OPTIONS ───────────────────────
     if len(option_labels) >= 4:
         col1, col2 = st.columns(2)
+
         with col1:
             left_opts = option_labels[: len(option_labels) // 2]
             left_choice = st.radio(
@@ -775,6 +775,7 @@ if (
                 index=None,
                 key=f"radio_left_{st.session_state.index}"
             )
+
         with col2:
             right_opts = option_labels[len(option_labels) // 2 :]
             right_choice = st.radio(
@@ -785,6 +786,7 @@ if (
             )
 
         selected_answer = left_choice or right_choice
+
     else:
         selected_answer = st.radio(
             "Select an answer:",
@@ -793,7 +795,7 @@ if (
             key=f"radio_{st.session_state.index}"
         )
 
-    # Submit
+    # ── SUBMIT ───────────────────────────────
     if st.button(
         "Submit answer",
         use_container_width=True,
@@ -801,6 +803,7 @@ if (
     ):
         if not selected_answer:
             st.warning("Please select an answer first")
+            end_main_card()
             st.stop()
 
         letter = selected_answer.split(".", 1)[0].strip().upper()
@@ -833,8 +836,9 @@ if (
         st.session_state.show_feedback = True
         st.rerun()
 
-    # Feedback
+    # ── FEEDBACK ─────────────────────────────
     if st.session_state.show_feedback:
+
         if st.session_state.last_correct:
             st.markdown("<div class='feedback-good'>✅ Correct!</div>", unsafe_allow_html=True)
         else:
@@ -856,6 +860,8 @@ if (
             st.session_state.show_feedback = False
             st.session_state.index += 1
             st.rerun()
+
+    end_main_card()
 
 
 # ── ROUND FINISHED ──────────────────────────────────────────────
