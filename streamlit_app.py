@@ -249,11 +249,13 @@ def start_quiz(topic, difficulty, num_questions=4, is_adaptive=False, mode="quiz
 
     return True
 
-# ── DIFFICULTY SELECTION ────────────────────────────────────────
-st.markdown("### Difficulty")
+# ── FIELD SELECTION PANEL (REPLACES DIFFICULTY + CATEGORY + CUSTOM) ─────────
 
+st.markdown("## Choose what you want to practice")
+
+# --- Difficulty (compact, calm) ---
 difficulty = st.radio(
-    "Choose level:",
+    "Difficulty",
     ["Easy", "Medium", "Hard"],
     horizontal=True,
     index=1
@@ -264,8 +266,113 @@ difficulty_map = {
     "Medium": "medium",
     "Hard": "hard"
 }
-
 selected_difficulty = difficulty_map[difficulty]
+
+st.markdown("---")
+
+# Helper: reset state when switching fields
+def select_field(field_key):
+    st.session_state.selected_mode = field_key
+    st.session_state.quiz = []
+    st.session_state.index = 0
+    st.session_state.show_feedback = False
+    st.session_state.round_correct = 0
+
+# --- Core fields (text-only, no emojis) ---
+st.markdown("### Fields")
+
+fields = [
+    ("general", "General Knowledge"),
+    ("science", "Science"),
+    ("history", "History"),
+    ("sports", "Sports"),
+    ("geography", "Geography"),
+]
+
+for key, label in fields:
+    if st.button(label, use_container_width=True, key=f"field_{key}"):
+        exit_concept_mode()
+        select_field(label)
+
+st.markdown("---")
+
+# --- Custom topic ---
+st.markdown("### Custom topic")
+
+custom_topic_input = st.text_input(
+    "Enter any topic",
+    placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…",
+    key="custom_topic_input"
+)
+
+if custom_topic_input.strip():
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Start quiz", use_container_width=True, key="custom_quiz_start"):
+            exit_concept_mode()
+            select_field("custom")
+            st.session_state.custom_topic = custom_topic_input.strip()
+
+            if start_quiz(
+                st.session_state.custom_topic,
+                selected_difficulty,
+                num_questions=4,
+                mode="quiz"
+            ):
+                st.rerun()
+
+    with col2:
+        if st.button("Start tutorial", use_container_width=True, key="custom_tutorial_start"):
+            exit_concept_mode()
+            select_field("custom")
+            st.session_state.custom_topic = custom_topic_input.strip()
+
+            if start_quiz(
+                st.session_state.custom_topic,
+                selected_difficulty,
+                num_questions=6,
+                mode="tutorial"
+            ):
+                st.rerun()
+
+st.markdown("---")
+
+# --- Concept Challenge (kept visible but clean) ---
+st.markdown("### Concept Challenge")
+
+if st.button("Start concept challenge", use_container_width=True, key="concept_challenge_btn"):
+    # hard reset to avoid overlap with MCQ modes
+    st.session_state.quiz = []
+    st.session_state.index = 0
+    st.session_state.show_feedback = False
+
+    with st.spinner("Selecting next concept..."):
+        data, err = post(
+            f"{BACKEND}/next-concept",
+            {"user_id": st.session_state.user_id}
+        )
+
+    if err:
+        st.error(f"Failed to load concept: {err}")
+        st.stop()
+
+    if data.get("done"):
+        st.success("You’ve mastered all available concepts!")
+        st.stop()
+
+    st.session_state.free_text_mode = True
+    st.session_state.concept_id = data["concept_id"]
+    st.session_state.concept_name = data["concept"]
+    st.session_state.core_idea = data["core_idea"]
+    st.session_state.ideal_explanation = data["ideal_explanation"]
+    st.session_state.concept_difficulty = data["difficulty"]
+
+    st.session_state.free_text_answer = ""
+    st.session_state.is_grading = False
+    st.session_state.show_feedback = False
+
+    st.rerun()
 
 # ── CATEGORY MENU ───────────────────────────────────────────────
 st.markdown("## Choose a category or enter your own topic")
