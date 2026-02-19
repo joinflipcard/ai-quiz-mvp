@@ -154,10 +154,16 @@ defaults = {
     "show_feedback": False,
     "last_correct": False,
     "last_explanation": "",
+    "last_verdict": "",
     "next_quiz": [],
     "next_meta": {},
     "round_correct": 0,
     "selected_mode": None,
+
+    # ── Explain more simply feature ──
+    "show_simple_explanation": False,
+    "simple_explanation": "",
+    "is_simplifying": False,
 }
 
 for key, value in defaults.items():
