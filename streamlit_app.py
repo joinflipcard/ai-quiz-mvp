@@ -534,31 +534,41 @@ if st.session_state.get("free_text_mode"):
         st.session_state.is_grading = False
         st.rerun()
 
-    # FEEDBACK
-    if st.session_state.get("show_feedback"):
+        # FEEDBACK
+        if st.session_state.get("show_feedback"):
 
-        if st.session_state.last_correct:
-            st.markdown("<div class='feedback-good'>✅ Correct</div>", unsafe_allow_html=True)
-        else:
-            st.markdown("<div class='feedback-bad'>❌ Not quite</div>", unsafe_allow_html=True)
+            if st.session_state.last_correct:
+                st.markdown("<div class='feedback-good'>✅ Correct</div>", unsafe_allow_html=True)
+            else:
+                st.markdown("<div class='feedback-bad'>❌ Not quite</div>", unsafe_allow_html=True)
 
-        if st.session_state.last_verdict:
-            st.info(st.session_state.last_verdict)
+            if st.session_state.last_verdict:
+                st.info(st.session_state.last_verdict)
 
-        if st.session_state.last_explanation:
-            st.markdown("**Ideal explanation:**")
-            st.markdown(st.session_state.last_explanation)
+            if st.session_state.last_explanation:
+                st.markdown("**Ideal explanation:**")
+                st.markdown(st.session_state.last_explanation)
 
-        # EXIT CONCEPT MODE
-        if st.button("Next →", use_container_width=True, key="next_concept"):
-            st.session_state.free_text_mode = False
+            # 👉 Explain more simply CTA
+            if st.button(
+                "Explain this more simply",
+                use_container_width=True,
+                key="explain_more_btn"
+            ):
+                st.session_state.is_simplifying = True
+                st.session_state.show_simple_explanation = False
+                st.rerun()
 
-            if "free_text_answer" in st.session_state:
-                del st.session_state["free_text_answer"]
+            # EXIT CONCEPT MODE
+            if st.button("Next →", use_container_width=True, key="next_concept"):
+                st.session_state.free_text_mode = False
+                st.session_state.show_simple_explanation = False
 
-            st.session_state.show_feedback = False
-            st.rerun()
+                if "free_text_answer" in st.session_state:
+                    del st.session_state["free_text_answer"]
 
+                st.session_state.show_feedback = False
+                st.rerun()
 
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
 # 🚫 IMPORTANT: Do NOT render MCQs while in Concept Challenge mode
