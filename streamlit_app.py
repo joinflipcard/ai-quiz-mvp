@@ -511,7 +511,12 @@ if st.session_state.get("free_text_mode"):
                         "concept": concept,
                         "core_idea": core_idea,
                         "ideal_explanation": ideal_explanation,
-                        "answer_text": st.session_state.free_text_answer
+                        # ✅ Always send non-empty text
+                        "answer_text": (
+                            st.session_state.free_text_answer.strip()
+                            if st.session_state.free_text_answer.strip()
+                            else "I don't know."
+                        )
                     },
                     timeout=30
                 )
@@ -522,6 +527,7 @@ if st.session_state.get("free_text_mode"):
                 st.error(f"Grading failed: {str(e)}")
                 st.session_state.is_grading = False
                 st.stop()
+
 
         # STORE RESULT
         st.session_state.last_correct = result.get("correct", False)
