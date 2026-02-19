@@ -299,7 +299,7 @@ def select_mode(mode):
     st.session_state.free_text_mode = False
     st.session_state.is_grading = False
 
-    # 🔥 explain-more state (CRITICAL RESET)
+    # explain-more reset (CRITICAL)
     st.session_state.show_simple_explanation = False
     st.session_state.simple_explanation = ""
     st.session_state.is_simplifying = False
@@ -336,6 +336,9 @@ with row2[0]:
 with row2[1]:
     if st.button("Concepts", use_container_width=True):
         select_mode("concept")
+
+# ✅ CLOSE THE WRAPPER
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ── STATE INITIALIZATION ────────────────────────────────────────
 defaults = {
