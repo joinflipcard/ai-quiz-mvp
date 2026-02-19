@@ -494,10 +494,7 @@ if st.session_state.get("free_text_mode"):
 
     # SUBMIT
     if st.button("Submit answer", use_container_width=True, key="submit_concept"):
-        if not answer_text.strip():
-            st.warning("Please enter an answer first")
-            st.stop()
-
+        # Allow blank submission (user just wants explanation)
         st.session_state.is_grading = True
         st.rerun()
 
