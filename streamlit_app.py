@@ -285,6 +285,35 @@ with row2[0]:
 with row2[1]:
     if st.button("Concepts", use_container_width=True):
         select_mode("concept")
+        
+# ── CATEGORY AUTO-START (NO EXTRA CLICKS) ───────────────────────
+# Uses user defaults for mode + difficulty
+
+category_topic_map = {
+    "general": "general knowledge",
+    "sports": "sports",
+    "science": "science",
+    "history": "history",
+}
+
+selected = st.session_state.get("selected_mode")
+
+if (
+    selected in category_topic_map
+    and not st.session_state.quiz
+    and not st.session_state.get("free_text_mode")
+):
+    topic = category_topic_map[selected]
+    mode = st.session_state.user_mode
+    difficulty = st.session_state.user_difficulty
+
+    if start_quiz(
+        topic=topic,
+        difficulty=difficulty,
+        num_questions=4 if mode == "quiz" else 6,
+        mode=mode
+    ):
+        st.rerun()
 
 # ── STATE INITIALIZATION ────────────────────────────────────────
 defaults = {
