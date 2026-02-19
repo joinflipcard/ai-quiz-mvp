@@ -124,6 +124,27 @@ h2, h3 {
 </style>
 """, unsafe_allow_html=True)
 
+# ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
+# Single place where questions / placeholder / answers render
+
+def begin_main_card():
+    st.markdown(
+        """
+        <div style="
+            background:#ffffff;
+            padding:24px;
+            border-radius:18px;
+            box-shadow:0 6px 18px rgba(0,0,0,.08);
+            margin-top:18px;
+            margin-bottom:18px;
+        ">
+        """,
+        unsafe_allow_html=True
+    )
+
+def end_main_card():
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # ── LOGIN ───────────────────────────────────────────────────────
 if "user_id" not in st.session_state:
     st.subheader("Login")
