@@ -169,6 +169,31 @@ st.markdown(
 )
 st.progress(accuracy)
 
+# ── MAIN CARD: DEFAULT PLACEHOLDER ─────────────────────────────
+# Shown when user has not selected a topic or concept yet
+
+def render_placeholder_card():
+    st.markdown(
+        """
+        <div class="quiz-card">
+            <div class="quiz-question">Ready when you are</div>
+            <p style="font-size:1.05rem; color:#555; margin-top:12px;">
+                Choose a category, enter a topic, or start a concept challenge to begin.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+# Render placeholder ONLY if nothing active
+if (
+    not st.session_state.get("quiz")
+    and not st.session_state.get("free_text_mode")
+    and not st.session_state.get("selected_mode")
+):
+    render_placeholder_card()
+
 # ── STATE INITIALIZATION ────────────────────────────────────────
 defaults = {
     "quiz": [],
