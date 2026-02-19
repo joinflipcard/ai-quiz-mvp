@@ -250,15 +250,60 @@ if (
 # ── PRIMARY SELECTION BAR (HORIZONTAL, CLEAN) ──────────────────
 # All entry paths live here. No duplicate CTAs elsewhere.
 
+# ── Blue primary button styling (Chrome-extension style) ──────
+st.markdown(
+    """
+    <style>
+    .stButton > button {
+        background-color: #2563eb; /* clean chrome-style blue */
+        color: white;
+        border: none;
+        border-radius: 14px;
+        height: 48px;
+        font-weight: 600;
+        transition: background-color 0.15s ease;
+    }
+    .stButton > button:hover {
+        background-color: #1e4fd8;
+        color: white;
+    }
+    .stButton > button:active {
+        background-color: #1a45bd;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# ── Mode selection handler (FULL RESET – FIXES BUG) ────────────
 def select_mode(mode):
+    # navigation
     st.session_state.selected_mode = mode
     st.session_state.quiz = []
     st.session_state.index = 0
-    st.session_state.show_feedback = False
     st.session_state.round_correct = 0
+
+    # feedback (quiz + concept)
+    st.session_state.show_feedback = False
+    st.session_state.last_correct = False
+    st.session_state.last_explanation = ""
+    st.session_state.last_verdict = ""
+
+    # concept / free-text mode
     st.session_state.free_text_mode = False
+    st.session_state.is_grading = False
+
+    # 🔥 explain-more state (CRITICAL RESET)
+    st.session_state.show_simple_explanation = False
+    st.session_state.simple_explanation = ""
+    st.session_state.is_simplifying = False
+
+    # remove lingering input
+    if "free_text_answer" in st.session_state:
+        del st.session_state["free_text_answer"]
 
 
+# ── BUTTON GRID ───────────────────────────────────────────────
 row1 = st.columns(4)
 row2 = st.columns(2)
 
@@ -285,7 +330,6 @@ with row2[0]:
 with row2[1]:
     if st.button("Concepts", use_container_width=True):
         select_mode("concept")
-
 
 # ── STATE INITIALIZATION ────────────────────────────────────────
 defaults = {
