@@ -255,7 +255,7 @@ st.markdown(
     """
     <style>
     .stButton > button {
-        background-color: #2563eb; /* clean chrome-style blue */
+        background-color: #2F5FA4;  /* extension blue */
         color: white;
         border: none;
         border-radius: 14px;
@@ -264,11 +264,11 @@ st.markdown(
         transition: background-color 0.15s ease;
     }
     .stButton > button:hover {
-        background-color: #1e4fd8;
+        background-color: #274F88;
         color: white;
     }
     .stButton > button:active {
-        background-color: #1a45bd;
+        background-color: #1F3F6E;
     }
     </style>
     """,
