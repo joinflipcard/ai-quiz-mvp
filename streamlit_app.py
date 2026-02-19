@@ -285,35 +285,7 @@ with row2[0]:
 with row2[1]:
     if st.button("Concepts", use_container_width=True):
         select_mode("concept")
-        
-# ── CATEGORY AUTO-START (NO EXTRA CLICKS) ───────────────────────
-# Uses user defaults for mode + difficulty
 
-category_topic_map = {
-    "general": "general knowledge",
-    "sports": "sports",
-    "science": "science",
-    "history": "history",
-}
-
-selected = st.session_state.get("selected_mode")
-
-if (
-    selected in category_topic_map
-    and not st.session_state.quiz
-    and not st.session_state.get("free_text_mode")
-):
-    topic = category_topic_map[selected]
-    mode = st.session_state.user_mode
-    difficulty = st.session_state.user_difficulty
-
-    if start_quiz(
-        topic=topic,
-        difficulty=difficulty,
-        num_questions=4 if mode == "quiz" else 6,
-        mode=mode
-    ):
-        st.rerun()
 
 # ── STATE INITIALIZATION ────────────────────────────────────────
 defaults = {
@@ -387,7 +359,7 @@ def exit_concept_mode():
 
 # ── START QUIZ FUNCTION ─────────────────────────────────────────
 def start_quiz(topic, difficulty, num_questions=4, is_adaptive=False, mode="quiz"):
-    with st.spinner("🧠 Creating your quiz..."):
+    with st.spinner("Creating your quiz..."):
         payload = {
             "topic": topic,
             "start_difficulty": difficulty,
@@ -419,6 +391,35 @@ def start_quiz(topic, difficulty, num_questions=4, is_adaptive=False, mode="quiz
 
     return True
 
+
+# ── CATEGORY AUTO-START (NO EXTRA CLICKS) ───────────────────────
+# This MUST be placed AFTER start_quiz is defined
+
+category_topic_map = {
+    "general": "general knowledge",
+    "sports": "sports",
+    "science": "science",
+    "history": "history",
+}
+
+selected = st.session_state.get("selected_mode")
+
+if (
+    selected in category_topic_map
+    and not st.session_state.quiz
+    and not st.session_state.get("free_text_mode")
+):
+    topic = category_topic_map[selected]
+    mode = st.session_state.user_mode
+    difficulty = st.session_state.user_difficulty
+
+    if start_quiz(
+        topic=topic,
+        difficulty=difficulty,
+        num_questions=4 if mode == "quiz" else 6,
+        mode=mode
+    ):
+        st.rerun()
 
 # ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
 # Ensures questions, answers, feedback always render in one place
