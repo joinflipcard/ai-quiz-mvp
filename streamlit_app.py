@@ -145,7 +145,7 @@ def begin_main_card():
 
 def end_main_card():
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
 # ── LOGIN ───────────────────────────────────────────────────────
 if "user_id" not in st.session_state:
     st.subheader("Login")
@@ -251,11 +251,12 @@ if (
 # ── PRIMARY SELECTION BAR (HORIZONTAL, CLEAN) ──────────────────
 # All entry paths live here. No duplicate CTAs elsewhere.
 
-# ── Blue primary button styling (Chrome-extension style) ──────
+# ── Scoped blue button styling (EXTENSION STYLE, SAFE) ─────────
 st.markdown(
     """
     <style>
-    .stButton > button {
+    /* ONLY buttons inside the primary selection bar */
+    .primary-select-bar .stButton > button {
         background-color: #2F5FA4;  /* extension blue */
         color: white;
         border: none;
@@ -264,14 +265,18 @@ st.markdown(
         font-weight: 600;
         transition: background-color 0.15s ease;
     }
-    .stButton > button:hover {
+
+    .primary-select-bar .stButton > button:hover {
         background-color: #274F88;
         color: white;
     }
-    .stButton > button:active {
+
+    .primary-select-bar .stButton > button:active {
         background-color: #1F3F6E;
     }
     </style>
+
+    <div class="primary-select-bar">
     """,
     unsafe_allow_html=True
 )
