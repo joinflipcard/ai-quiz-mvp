@@ -124,7 +124,28 @@ h2, h3 {
 </style>
 """, unsafe_allow_html=True)
 
+# ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
+# Single place where questions / placeholder / answers render
 
+def begin_main_card():
+    st.markdown(
+        """
+        <div style="
+            background:#ffffff;
+            padding:24px;
+            border-radius:14px;
+            border:1px solid #e6e9ef;
+            box-shadow:0 4px 10px rgba(0,0,0,.05);
+            margin-top:18px;
+            margin-bottom:18px;
+        ">
+        """,
+        unsafe_allow_html=True
+    )
+
+def end_main_card():
+    st.markdown("</div>", unsafe_allow_html=True)
+    
 # ── LOGIN ───────────────────────────────────────────────────────
 if "user_id" not in st.session_state:
     st.subheader("Login")
@@ -547,7 +568,7 @@ if st.session_state.get("selected_mode") == "concept":
         st.rerun()
 
     end_main_card()
-    
+
 # ── CARD HEADER STRIP (EXTENSION STYLE) ──────────────────────────
 st.markdown(
     """
@@ -565,28 +586,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-# ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
-# Single place where questions / placeholder / answers render
-
-def begin_main_card():
-    st.markdown(
-        """
-        <div style="
-            background:#ffffff;
-            padding:24px;
-            border-radius:14px;
-            border:1px solid #e6e9ef;
-            box-shadow:0 4px 10px rgba(0,0,0,.05);
-            margin-top:18px;
-            margin-bottom:18px;
-        ">
-        """,
-        unsafe_allow_html=True
-    )
-
-def end_main_card():
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # ── FREE-TEXT QUESTION MODE ────────────────────────────────────
 # Uses native keyboard dictation on iOS (no custom mic needed)
