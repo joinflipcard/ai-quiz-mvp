@@ -676,37 +676,43 @@ if st.session_state.get("free_text_mode"):
             st.rerun()
 
     # ── SIMPLER EXPLANATION FLOW ───────────────────
-    if st.session_state.get("is_simplifying"):
+# ⚠️ Fetch is fine, render MUST be gated by feedback
 
-        with st.spinner("Breaking it down more simply..."):
-            try:
-                r = requests.post(
-                    f"{BACKEND}/explain-better",
-                    json={
-                        "concept": st.session_state.concept_name,
-                        "core_idea": st.session_state.core_idea,
-                        "ideal_explanation": st.session_state.ideal_explanation,
-                        "difficulty": st.session_state.concept_difficulty
-                    },
-                    timeout=30
-                )
-                r.raise_for_status()
-                data = r.json()
+if st.session_state.get("is_simplifying"):
 
-                st.session_state.simple_explanation = data.get("simple_explanation", "")
-                st.session_state.show_simple_explanation = True
-                st.session_state.is_simplifying = False
+    with st.spinner("Breaking it down more simply..."):
+        try:
+            r = requests.post(
+                f"{BACKEND}/explain-better",
+                json={
+                    "concept": st.session_state.concept_name,
+                    "core_idea": st.session_state.core_idea,
+                    "ideal_explanation": st.session_state.ideal_explanation,
+                    "difficulty": st.session_state.concept_difficulty
+                },
+                timeout=30
+            )
+            r.raise_for_status()
+            data = r.json()
 
-            except Exception as e:
-                st.error(f"Could not simplify explanation: {str(e)}")
-                st.session_state.is_simplifying = False
+            st.session_state.simple_explanation = data.get("simple_explanation", "")
+            st.session_state.show_simple_explanation = True
+            st.session_state.is_simplifying = False
 
-    if st.session_state.get("show_simple_explanation"):
-        st.markdown("### Simpler explanation")
-        st.success(st.session_state.simple_explanation)
+        except Exception as e:
+            st.error(f"Could not simplify explanation: {str(e)}")
+            st.session_state.is_simplifying = False
 
-    end_main_card()
 
+# ── RENDER (STRICTLY AFTER FEEDBACK) ───────────
+if (
+    st.session_state.get("show_feedback")
+    and st.session_state.get("show_simple_explanation")
+):
+    st.markdown("### Simpler explanation")
+    st.success(st.session_state.simple_explanation)
+
+end_main_card()
 
 # ── QUIZ DISPLAY ────────────────────────────────────────────────
 # 🚫 IMPORTANT: Do NOT render MCQs while in Concept Challenge mode
