@@ -513,10 +513,29 @@ if st.session_state.get("selected_mode") == "concept":
 
     if st.button("Start concept challenge", use_container_width=True):
 
+        # ── CLEAR ANY PRIOR QUIZ / FEEDBACK STATE ─────────
         st.session_state.quiz = []
         st.session_state.index = 0
-        st.session_state.show_feedback = False
+        st.session_state.round_correct = 0
 
+        st.session_state.show_feedback = False
+        st.session_state.last_correct = False
+        st.session_state.last_verdict = ""
+        st.session_state.last_explanation = ""
+
+        # ── CLEAR EXPLAIN-MORE STATE (CRITICAL) ───────────
+        st.session_state.show_simple_explanation = False
+        st.session_state.simple_explanation = ""
+        st.session_state.is_simplifying = False
+
+        # ── CLEAR FREE-TEXT STATE ─────────────────────────
+        st.session_state.free_text_mode = False
+        st.session_state.is_grading = False
+
+        if "free_text_answer" in st.session_state:
+            del st.session_state["free_text_answer"]
+
+        # ── FETCH NEXT CONCEPT ───────────────────────────
         with st.spinner("Selecting next concept..."):
             data, err = post(
                 f"{BACKEND}/next-concept",
@@ -533,14 +552,15 @@ if st.session_state.get("selected_mode") == "concept":
             end_main_card()
             st.stop()
 
-        st.session_state.free_text_mode = True
+        # ── SET NEW CONCEPT STATE ────────────────────────
         st.session_state.concept_id = data["concept_id"]
         st.session_state.concept_name = data["concept"]
         st.session_state.core_idea = data["core_idea"]
         st.session_state.ideal_explanation = data["ideal_explanation"]
         st.session_state.concept_difficulty = data["difficulty"]
 
-        st.session_state.free_text_answer = ""
+        # ── ACTIVATE FREE-TEXT MODE (AFTER RESET) ────────
+        st.session_state.free_text_mode = True
         st.session_state.is_grading = False
         st.session_state.show_feedback = False
 
