@@ -421,6 +421,89 @@ if (
     ):
         st.rerun()
 
+# ── PICK A TOPIC FLOW ───────────────────────────────────────────
+
+if st.session_state.get("selected_mode") == "custom":
+
+    begin_main_card()
+
+    st.markdown("<div class='quiz-question'>Pick a topic</div>", unsafe_allow_html=True)
+
+    custom_topic = st.text_input(
+        "Enter any topic",
+        placeholder="e.g. World Cup history, neuroscience, Taylor Swift eras…",
+        key="custom_topic_input"
+    )
+
+    if custom_topic.strip():
+
+        if st.button(
+            f"Start {st.session_state.user_mode.title()}",
+            use_container_width=True,
+            key="start_custom_topic"
+        ):
+            if start_quiz(
+                topic=custom_topic.strip(),
+                difficulty=st.session_state.user_difficulty,
+                num_questions=4 if st.session_state.user_mode == "quiz" else 6,
+                mode=st.session_state.user_mode
+            ):
+                st.rerun()
+
+    end_main_card()
+
+# ── CONCEPT CHALLENGE ENTRY ─────────────────────────────────────
+
+if st.session_state.get("selected_mode") == "concept":
+
+    begin_main_card()
+
+    st.markdown("<div class='quiz-question'>Concept Challenge</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        "<p style='font-size:1.05rem;color:#555;'>"
+        "Explain ideas in your own words. No multiple choice."
+        "</p>",
+        unsafe_allow_html=True
+    )
+
+    if st.button("Start concept challenge", use_container_width=True):
+
+        st.session_state.quiz = []
+        st.session_state.index = 0
+        st.session_state.show_feedback = False
+
+        with st.spinner("Selecting next concept..."):
+            data, err = post(
+                f"{BACKEND}/next-concept",
+                {"user_id": st.session_state.user_id}
+            )
+
+        if err:
+            st.error(f"Failed to load concept: {err}")
+            end_main_card()
+            st.stop()
+
+        if data.get("done"):
+            st.success("You’ve mastered all available concepts.")
+            end_main_card()
+            st.stop()
+
+        st.session_state.free_text_mode = True
+        st.session_state.concept_id = data["concept_id"]
+        st.session_state.concept_name = data["concept"]
+        st.session_state.core_idea = data["core_idea"]
+        st.session_state.ideal_explanation = data["ideal_explanation"]
+        st.session_state.concept_difficulty = data["difficulty"]
+
+        st.session_state.free_text_answer = ""
+        st.session_state.is_grading = False
+        st.session_state.show_feedback = False
+
+        st.rerun()
+
+    end_main_card()
+
 # ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
 # Ensures questions, answers, feedback always render in one place
 
