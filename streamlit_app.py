@@ -445,7 +445,6 @@ def start_quiz(topic, difficulty, num_questions=4, is_adaptive=False, mode="quiz
 
     return True
 
-
 # ── CATEGORY AUTO-START (NO EXTRA CLICKS) ───────────────────────
 # This MUST be placed AFTER start_quiz is defined
 
@@ -454,6 +453,7 @@ category_topic_map = {
     "sports": "sports",
     "science": "science",
     "history": "history",
+    "geography": "geography",
 }
 
 selected = st.session_state.get("selected_mode")
