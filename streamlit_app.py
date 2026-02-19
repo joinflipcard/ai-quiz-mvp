@@ -310,7 +310,7 @@ def select_mode(mode):
 
 
 # ── BUTTON GRID ───────────────────────────────────────────────
-row1 = st.columns(4)
+row1 = st.columns(5)
 row2 = st.columns(2)
 
 with row1[0]:
@@ -329,6 +329,10 @@ with row1[3]:
     if st.button("History", use_container_width=True):
         select_mode("history")
 
+with row1[4]:
+    if st.button("Geography", use_container_width=True):
+        select_mode("geography")
+
 with row2[0]:
     if st.button("Pick a Topic", use_container_width=True):
         select_mode("custom")
@@ -336,9 +340,6 @@ with row2[0]:
 with row2[1]:
     if st.button("Concepts", use_container_width=True):
         select_mode("concept")
-
-# ✅ CLOSE THE WRAPPER
-st.markdown("</div>", unsafe_allow_html=True)
 
 # ── STATE INITIALIZATION ────────────────────────────────────────
 defaults = {
