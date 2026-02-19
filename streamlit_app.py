@@ -547,6 +547,24 @@ if st.session_state.get("selected_mode") == "concept":
         st.rerun()
 
     end_main_card()
+    
+# ── CARD HEADER STRIP (EXTENSION STYLE) ──────────────────────────
+st.markdown(
+    """
+    <style>
+    .card-header {
+        background: #2F5FA4;
+        color: white;
+        font-weight: 600;
+        padding: 10px 14px;
+        border-radius: 14px 14px 0 0;
+        margin: -24px -24px 16px -24px;
+        font-size: 1.05rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # ── MAIN CONTENT CARD WRAPPER ─────────────────────────────────────
 # Single place where questions / placeholder / answers render
