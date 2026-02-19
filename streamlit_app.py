@@ -169,33 +169,65 @@ st.markdown(
 )
 st.progress(accuracy)
 
-# ── MAIN CARD: DEFAULT PLACEHOLDER ─────────────────────────────
-# Shown when user has not selected a topic or concept yet
+# ── MAIN CARD: DEFAULT PLACEHOLDER + PRIMARY CONTROLS ──────────
+# Single, clean entry point. No redundancy.
 
-def render_placeholder_card():
-    st.markdown(
-        """
-        <div class="quiz-card">
-            <div class="quiz-question">Ready when you are</div>
-            <p style="font-size:1.05rem; color:#555; margin-top:12px;">
-                Choose a category, enter a topic, or start a concept challenge to begin.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+# ── Persistent user defaults (set once, reused everywhere) ────
+if "user_mode" not in st.session_state:
+    st.session_state.user_mode = "quiz"        # quiz | tutorial
+
+if "user_difficulty" not in st.session_state:
+    st.session_state.user_difficulty = "medium"  # easy | medium | hard
 
 
-# Render placeholder ONLY if nothing active
+# ── TOP CONTROLS: MODE + DIFFICULTY (SLIDING STYLE) ────────────
+top_cols = st.columns([1.2, 1.2, 3.6])
+
+with top_cols[0]:
+    st.session_state.user_mode = st.selectbox(
+        "Mode",
+        ["Quiz", "Tutorial"],
+        index=0 if st.session_state.user_mode == "quiz" else 1,
+        label_visibility="collapsed"
+    ).lower()
+
+with top_cols[1]:
+    st.session_state.user_difficulty = st.selectbox(
+        "Difficulty",
+        ["Easy", "Medium", "Hard"],
+        index=["easy", "medium", "hard"].index(st.session_state.user_difficulty),
+        label_visibility="collapsed"
+    ).lower()
+
+with top_cols[2]:
+    st.empty()
+
+
+# ── MAIN CARD PLACEHOLDER (same location as questions) ─────────
 if (
     not st.session_state.get("quiz")
     and not st.session_state.get("free_text_mode")
     and not st.session_state.get("selected_mode")
 ):
-    render_placeholder_card()
+    begin_main_card()
 
-# ── PRIMARY SELECTION BAR (HORIZONTAL) ──────────────────────────
-# Single source of truth for what the user wants to do
+    st.markdown(
+        "<div class='quiz-question'>Ready when you are</div>",
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        "<p style='font-size:1.05rem;color:#555;margin-top:10px;'>"
+        "Choose a category, enter a topic, or start a concept challenge to begin."
+        "</p>",
+        unsafe_allow_html=True
+    )
+
+    end_main_card()
+
+
+# ── PRIMARY SELECTION BAR (HORIZONTAL, CLEAN) ──────────────────
+# All entry paths live here. No duplicate CTAs elsewhere.
 
 def select_mode(mode):
     st.session_state.selected_mode = mode
@@ -206,63 +238,32 @@ def select_mode(mode):
     st.session_state.free_text_mode = False
 
 
-cols = st.columns(6)
+row1 = st.columns(4)
+row2 = st.columns(2)
 
-with cols[0]:
+with row1[0]:
     if st.button("General Knowledge", use_container_width=True):
         select_mode("general")
 
-with cols[1]:
+with row1[1]:
     if st.button("Sports", use_container_width=True):
         select_mode("sports")
 
-with cols[2]:
+with row1[2]:
     if st.button("Science", use_container_width=True):
         select_mode("science")
 
-with cols[3]:
+with row1[3]:
     if st.button("History", use_container_width=True):
         select_mode("history")
 
-with cols[4]:
+with row2[0]:
     if st.button("Pick a Topic", use_container_width=True):
         select_mode("custom")
 
-with cols[5]:
+with row2[1]:
     if st.button("Concepts", use_container_width=True):
         select_mode("concept")
-        
-# ── USER DEFAULT TOGGLES (MODE + DIFFICULTY) ────────────────────
-# Persistent, lightweight, no re-click required
-
-if "user_mode" not in st.session_state:
-    st.session_state.user_mode = "quiz"   # quiz | tutorial
-
-if "user_difficulty" not in st.session_state:
-    st.session_state.user_difficulty = "medium"  # easy | medium | hard
-
-
-toggle_cols = st.columns([1, 1, 4])
-
-with toggle_cols[0]:
-    mode_choice = st.radio(
-        "Mode",
-        ["Quiz", "Tutorial"],
-        horizontal=True,
-        index=0 if st.session_state.user_mode == "quiz" else 1,
-        key="mode_toggle"
-    )
-    st.session_state.user_mode = mode_choice.lower()
-
-with toggle_cols[1]:
-    diff_choice = st.radio(
-        "Difficulty",
-        ["Easy", "Medium", "Hard"],
-        horizontal=True,
-        index=["easy", "medium", "hard"].index(st.session_state.user_difficulty),
-        key="difficulty_toggle"
-    )
-    st.session_state.user_difficulty = diff_choice.lower()
 
 # ── STATE INITIALIZATION ────────────────────────────────────────
 defaults = {
