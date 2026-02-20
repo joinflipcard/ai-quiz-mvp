@@ -224,29 +224,6 @@ with top_cols[1]:
 with top_cols[2]:
     st.empty()
 
-
-# ── MAIN CARD PLACEHOLDER (same location as questions) ─────────
-if (
-    not st.session_state.get("quiz")
-    and not st.session_state.get("free_text_mode")
-    and not st.session_state.get("selected_mode")
-):
-    begin_main_card()
-
-    st.markdown(
-        "<div class='quiz-question'>Ready when you are</div>",
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        "<p style='font-size:1.05rem;color:#555;margin-top:10px;'>"
-        "Choose a category, enter a topic, or start a concept challenge to begin."
-        "</p>",
-        unsafe_allow_html=True
-    )
-
-    end_main_card()
-
 # ── PRIMARY BUTTON STYLE (EXTENSION BLUE – STREAMLIT SAFE) ─────
 st.markdown(
     """
