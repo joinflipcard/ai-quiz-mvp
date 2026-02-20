@@ -52,7 +52,7 @@ h2, h3 {
     word-break: break-word;
 }
 
-/* radio spacing */
+/* radio spacing (desktop / tablet) */
 .stRadio > div {
     gap: 8px;
 }
@@ -111,14 +111,25 @@ h2, h3 {
     letter-spacing: 0.2px;
 }
 
-/* mobile safety */
+/* mobile safety + FIX uneven radio spacing on iPhone */
 @media (max-width: 640px) {
+
     .quiz-question {
         font-size: 1.25rem;
     }
 
     .stButton button {
         height: 46px;
+    }
+
+    /* force uniform spacing between ALL answer options */
+    .stRadio div[role="radiogroup"] > label {
+        margin-bottom: 10px !important;
+    }
+
+    /* remove phantom gaps inserted by Streamlit on mobile */
+    .stRadio > div {
+        gap: 0px !important;
     }
 }
 </style>
